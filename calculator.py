@@ -6,28 +6,29 @@ from PyQt5.QtGui import QFont
 
 class expression(): #表达式类，用来计算一个形如(a ± b */ c)的表达式的值。
     def __init__(self):
-        self.res=0
-        self.prev_sym=""
-        self.prev_num=0
-        self.curr_num=0
-        self.curr_sym=""
+        self.res=0  #当前表达式中已经计算完了的部分，对应上面的a
+        self.prev_sym=""    #对应a、b之间的那个±.表示正在运算的部分应当被加到res中还是从res中减去.
+        self.prev_num=0     #对应b，被乘/除数
+        self.curr_num=0     #对应c，乘/除数
+        self.curr_sym=""    #对应b、c之间的*/.表示b、c相乘还是相除
         self.curr_num_text=""
-#利用栈结构来
+#利用栈结构来处理括号嵌套.每遇到'('就把当前的expression对象入栈，在栈顶新开一个expression对象处理当前的括号.每遇到')'就出栈，处理上一级括号
+#初始化
 EXP=expression()
 CAL=[]
 CAL.append(EXP)
 
+#异常处理函数，待完善
 def ERROR_INPUT():
     return None
 
+#GUI界面
 class Example(QWidget):
-
     def __init__(self):
         super().__init__()
 
         self.initUI()
-        self.restart=True
-
+        self.restart=True   #restart标志量表示是否重开
 
     def initUI(self):
         
@@ -39,8 +40,7 @@ class Example(QWidget):
 
         positions = [(i+20,j) for i in range(5) for j in range(4)]
         
-        for position, name in zip(positions, self.names):
-            
+        for position, name in zip(positions, self.names):   #对每个button设置位置、文字与快捷键
             if name == '':
                 continue
             button=QPushButton(name,self)
@@ -50,12 +50,13 @@ class Example(QWidget):
             button.clicked.connect(self.INPUT)
             grid.addWidget(button, *position)
 
+        #用于显示输入表达式的label
         self.exp=""
         self.label_exp = QLabel(self.exp, self)
         grid.addWidget(self.label_exp, 0, 0, 1, 4)
         self.label_exp.setAlignment(Qt.AlignRight)
 
-        
+        #用于显示计算结果的label
         self.label_ans = QLabel(self)
         grid.addWidget(self.label_ans, 10, 0, 1, 4)
         self.label_ans.setAlignment(Qt.AlignRight)
@@ -64,33 +65,34 @@ class Example(QWidget):
         self.setWindowTitle('Calculator')
         self.show()
 
+    #button被按下事件处理函数
     def INPUT(self):
         global CAL
-        if self.restart:
+        if self.restart:    #如果需要重开，则清除CAL栈
             CAL.clear()
             EXP=expression()
             CAL.append(EXP)
             self.restart=False
             self.exp=""
         
-        sender=self.sender().text()
+        sender=self.sender().text() #判断按下了哪个button
         if sender == "Cls":
             self.restart=True
             self.label_exp.setText("")
             self.label_ans.setText("")
 
-        elif sender in self.operators:
+        elif sender in self.operators:  #如果按下的是运算符
             self.exp=self.exp+sender
             self.restart=False
 
-            if sender=="(":
+            if sender=="(":    #新开一个expression类压入栈
                 temp=expression()
                 CAL.append(temp)
 
-            elif sender.isdigit() or sender == '.':
+            elif sender.isdigit() or sender == '.': #如果是数字或小数点，继续读
                 CAL[-1].curr_num_text+=sender
 
-            elif (sender=="+" or sender=="-" or sender==")" or sender=="="):
+            elif (sender=="+" or sender=="-" or sender==")" or sender=="="):    #遇到+-)=，进行计算
                 if CAL[-1].curr_num_text!="":
                     CAL[-1].curr_num=float(CAL[-1].curr_num_text)
                 sgn=-1 if (CAL[-1].prev_sym=="-") else 1
@@ -115,7 +117,7 @@ class Example(QWidget):
                     CAL.pop()
                     CAL[-1].curr_num=ans
 
-            elif (sender=="*" or sender=="/"):
+            elif (sender=="*" or sender=="/"):  #遇到*/，记录在prev_sym和prev_num中
                 if CAL[-1].curr_num_text!="":
                     CAL[-1].curr_num=float(CAL[-1].curr_num_text)
                 if CAL[-1].prev_num==0:
@@ -130,6 +132,7 @@ class Example(QWidget):
                 CAL[-1].curr_num=0
                 CAL[-1].curr_num_text=""
             
+            #输出结果与格式控制
             self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
             self.label_exp.setText(self.exp)
             self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
