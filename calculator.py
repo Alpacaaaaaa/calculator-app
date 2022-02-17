@@ -10,14 +10,17 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import QFont, QIcon
 from SETTINGS import SETTINGS
 
-class expression(): #表达式类，用来计算一个形如(a ± b */ c)的表达式的值。
+class expression(): #表达式类，用来计算一个形如(a ± b */ c ^ d)的表达式的值。
     def __init__(self):
         self.res=0  #当前表达式中已经计算完了的部分，对应上面的a
         self.prev_sym=""    #对应a、b之间的那个±.表示正在运算的部分应当被加到res中还是从res中减去.
-        self.prev_num=None     #对应b，被乘/除数
-        self.curr_num=None  #对应c，乘/除数
+        self.prev_num=None  #对应b，被乘/除数
+        self.curr_num=None  #对应c或d，正在读入的数
+        self.base_num=None  #对应c，底数
         self.curr_sym=""    #对应b、c之间的*/.表示b、c相乘还是相除
-        self.curr_num_text=""
+        self.curr_num_text=""   #用来读取数值型的curr_num的中间变量
+    def Eprint(self):
+        print("[{0},{1},{2},{3}]".format(self.res,self.prev_num,self.base_num,self.curr_num))
 #利用栈结构来处理括号嵌套.每遇到'('就把当前的expression对象入栈，在栈顶新开一个expression对象处理当前的括号.每遇到')'就出栈，处理上一级括号
 #初始化
 EXP=expression()
@@ -27,8 +30,6 @@ CAL.append(EXP)
 #异常处理函数，待完善
 def ERROR_INPUT():
     return None
-
-
 
 
 #GUI界面
@@ -42,28 +43,36 @@ class Calculator(QMainWindow):
     def initUI(self):
         grid = QGridLayout()
 
+        #工具栏选项
+        #“设置”选项卡
         settings = QAction('设置', self)
-        # settings.setShortcut('Ctrl+Q')
+        # settings.setShortcut('Alt+S')
         settings.triggered.connect(self.show_option)
 
         self.toolbar = self.addToolBar('toolbar')
         self.toolbar.addAction(settings)
 
-        self.setGeometry(300, 300, 300, 200)
-        self.setWindowTitle('Calculator Simple')    
-        self.show()
+        # self.setGeometry(300, 300, 300, 200)
+        # self.setWindowTitle('Calculator Simple')    
+        # self.show()
+
+        #初始化“设置”选项卡
 
         self.setting_dialog=SETTINGS()
 
 
-        self.names = ['ln', 'Cls', 'Bck', '(', ')', 'exp','7', '8', '9', '/', 'sqrt', '4', '5', '6', '*','e', '1', '2', '3', '-', 'pi', '0', '.', '=', '+']
-        self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=']
+        # self.names = ['ln', 'Cls', 'Bck', '(', ')', 'exp','7', '8', '9', '/', 'sqrt', '4', '5', '6', '*','e', '1', '2', '3', '-', 'pi', '0', '.', '=', '+']
+        self.names = ['', '', 'sin', 'cos', 'tan', '', 'lg', 'ln', '(', ')', 'x^y', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
+        self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
+
+        #定义常量e与pi，有小数和符号两种类型，self.constants根据self.setting_dialog.sym来判断指向符号类型的还是小数类型的
         self.sym_const = {'e':sympy.E, 'pi':sympy.pi}
         self.num_const = {'e':2.718281828459, 'pi':3.141592653589}
         self.constants = self.sym_const if self.setting_dialog.sym else self.num_const
+
         self.functions = ['ln', 'exp', 'sqrt']
 
-        positions = [(i+20,j) for i in range(5) for j in range(5)]
+        positions = [(i+20,j) for i in range(7) for j in range(5)]
         
         for position, name in zip(positions, self.names):   #对每个button设置位置、文字与快捷键
             if name == '':
@@ -97,6 +106,7 @@ class Calculator(QMainWindow):
     #button被按下事件处理函数
     def INPUT(self):
         global CAL
+
         self.constants = self.sym_const if self.setting_dialog.sym else self.num_const
         if self.restart:    #如果需要重开，则清除CAL栈
             CAL.clear()
@@ -106,7 +116,7 @@ class Calculator(QMainWindow):
             self.exp=""
         
         sender=self.sender().text() #判断按下了哪个button
-        if sender == "Cls":
+        if sender == "CE":
             self.restart=True
             self.label_exp.setText("")
             self.label_ans.setText("")
@@ -114,7 +124,6 @@ class Calculator(QMainWindow):
         elif sender in self.constants.keys():
             CAL[-1].curr_num=self.constants[sender]
             self.exp+=sender
-
 
         elif sender in self.operators:  #如果按下的是运算符
             
@@ -130,10 +139,16 @@ class Calculator(QMainWindow):
 
             elif (sender=="+" or sender=="-" or sender==")" or sender=="="):    #遇到+-)=，进行计算
                 # print(CAL[-1].curr_num)
-                if (CAL[-1].curr_num==None and CAL[-1].curr_num_text!=""):
-                    CAL[-1].curr_num=float(CAL[-1].curr_num_text)
+                if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
+                    CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
+
+                if (CAL[-1].base_num!=None):                                #再结算^运算
+                    CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
+                    CAL[-1].base_num=None
+
                 sgn=-1 if (CAL[-1].prev_sym=="-") else 1
-                if (CAL[-1].curr_sym==""):
+
+                if (CAL[-1].curr_sym==""):                                  #再结算*/运算
                     CAL[-1].res+=CAL[-1].curr_num*sgn
 
                 elif (CAL[-1].curr_sym=="*"):
@@ -155,8 +170,13 @@ class Calculator(QMainWindow):
                     CAL[-1].curr_num=ans
 
             elif (sender=="*" or sender=="/"):  #遇到*/，记录在prev_sym和prev_num中
-                if CAL[-1].curr_num_text!="":
-                    CAL[-1].curr_num=float(CAL[-1].curr_num_text)
+                if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
+                    CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
+                
+                if (CAL[-1].base_num!=None):                                #再结算^运算
+                    CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
+                    CAL[-1].base_num=None
+
                 if CAL[-1].prev_num==None:
                     CAL[-1].prev_num=CAL[-1].curr_num
 
@@ -168,13 +188,25 @@ class Calculator(QMainWindow):
                 CAL[-1].curr_sym=sender
                 CAL[-1].curr_num=None
                 CAL[-1].curr_num_text=""
+
+            elif (sender=="^"): #遇到^，
+                if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
+                    CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
+                if (CAL[-1].base_num!=None):                                #再结算^运算
+                    CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
+            
+                CAL[-1].base_num=CAL[-1].curr_num
+                CAL[-1].curr_num=None
+                CAL[-1].curr_num_text=""
+                
             
         #输出结果与格式控制
         self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
         self.label_exp.setText(self.exp)
         self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
         self.label_ans.setText("{0}".format(CAL[0].res))
-    
+        
+
     def show_option(self):
         self.setting_dialog.show()
         

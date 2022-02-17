@@ -34,7 +34,6 @@ class SETTINGS(QWidget):
 
         self.setGeometry(300, 300, 300, 150)
         self.setWindowTitle('设置')    
-        self.show()
 
         self.sym=False
         self.ang="rad"
