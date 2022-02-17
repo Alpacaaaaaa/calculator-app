@@ -56,10 +56,6 @@ class Calculator(QMainWindow):
         self.toolbar = self.addToolBar('toolbar')
         self.toolbar.addAction(settings)
 
-        # self.setGeometry(300, 300, 300, 200)
-        # self.setWindowTitle('Calculator Simple')    
-        # self.show()
-
         #初始化“设置”选项卡
         self.setting_dialog=SETTINGS()
 
@@ -73,7 +69,7 @@ class Calculator(QMainWindow):
 
         #利用lambda表达式给出函数对应的句柄，写成字典的形式，方便调用
         self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x)}
-        self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan'}
+        self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan', '|x|':'abs'}
 
         positions = [(i+20,j) for i in range(7) for j in range(5)]
         
@@ -148,7 +144,6 @@ class Calculator(QMainWindow):
                 CAL[-1].curr_num_text+=sender
 
             elif (sender=="+" or sender=="-" or sender==")" or sender=="="):    #遇到+-)=，进行计算
-                # print(CAL[-1].curr_num)
                 if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
                     CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
 
