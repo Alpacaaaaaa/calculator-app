@@ -1,6 +1,7 @@
 '''
-尝试加入符号运算.
-目前实现的是包含pi和e的四则运算的符号化，并且在工具栏提供了设置选项
+尝试加入函数运算.
+现存问题：
+"设置"选项卡里面角度/弧度转换选项还没有实现，然后反三角函数输出格式(符号/小数)也有点小问题，以及'Bck'键不可用，以及没法抛异常，输入奇怪的东西会崩掉
 '''
 import numpy as np
 import sys
@@ -124,15 +125,16 @@ class Calculator(QMainWindow):
             self.label_ans.setText("")
             return None
 
-        elif sender in self.constants.keys():
+        elif sender in self.constants.keys():   #按下的是pi或e等常量
             CAL[-1].curr_num=self.constants[sender]
             self.exp+=sender
 
-        elif sender in self.functions.keys():
-            temp=expression()
-            CAL.append(temp)
-            FUNC.append(sender)
+        elif sender in self.functions.keys():   #遇到函数
+            temp=expression()           #新开一个expression对象压入CAL栈
+            CAL.append(temp)            
+            FUNC.append(sender)         #将函数记录到函数栈里面
             self.exp=self.exp+self.function_label[sender]+'('
+
         elif sender in self.operators:  #如果按下的是运算符
             self.exp=self.exp+sender
             self.restart=False
