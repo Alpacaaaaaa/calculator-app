@@ -1,3 +1,6 @@
+'''
+本文件中定义SETTINGS类，是calculator界面"设置"选项卡弹窗的实现
+'''
 import sys
 from PyQt5.QtWidgets import QWidget, QRadioButton, QApplication, QPushButton, QMessageBox, QButtonGroup, QGridLayout, QLabel
 

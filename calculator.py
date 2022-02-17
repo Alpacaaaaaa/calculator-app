@@ -27,6 +27,9 @@ EXP=expression()
 CAL=[]
 CAL.append(EXP)
 
+#同样利用栈结构来处理函数调用.开一个函数栈来记录每层括号()外面对应的是什么函数
+FUNC=[]
+
 #异常处理函数，待完善
 def ERROR_INPUT():
     return None
@@ -57,12 +60,9 @@ class Calculator(QMainWindow):
         # self.show()
 
         #初始化“设置”选项卡
-
         self.setting_dialog=SETTINGS()
 
-
-        # self.names = ['ln', 'Cls', 'Bck', '(', ')', 'exp','7', '8', '9', '/', 'sqrt', '4', '5', '6', '*','e', '1', '2', '3', '-', 'pi', '0', '.', '=', '+']
-        self.names = ['', '', 'sin', 'cos', 'tan', '', 'lg', 'ln', '(', ')', 'x^y', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
+        self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 'x^y', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
         self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
 
         #定义常量e与pi，有小数和符号两种类型，self.constants根据self.setting_dialog.sym来判断指向符号类型的还是小数类型的
@@ -70,7 +70,9 @@ class Calculator(QMainWindow):
         self.num_const = {'e':2.718281828459, 'pi':3.141592653589}
         self.constants = self.sym_const if self.setting_dialog.sym else self.num_const
 
-        self.functions = ['ln', 'exp', 'sqrt']
+        #利用lambda表达式给出函数对应的句柄，写成字典的形式，方便调用
+        self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x)}
+        self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan'}
 
         positions = [(i+20,j) for i in range(7) for j in range(5)]
         
@@ -120,19 +122,25 @@ class Calculator(QMainWindow):
             self.restart=True
             self.label_exp.setText("")
             self.label_ans.setText("")
+            return None
 
         elif sender in self.constants.keys():
             CAL[-1].curr_num=self.constants[sender]
             self.exp+=sender
 
+        elif sender in self.functions.keys():
+            temp=expression()
+            CAL.append(temp)
+            FUNC.append(sender)
+            self.exp=self.exp+self.function_label[sender]+'('
         elif sender in self.operators:  #如果按下的是运算符
-            
             self.exp=self.exp+sender
             self.restart=False
 
-            if sender=="(":    #新开一个expression类压入栈
+            if sender=="(":    #新开一个expression类压入CAL栈,同时函数栈压入空字符串
                 temp=expression()
                 CAL.append(temp)
+                FUNC.append("")
 
             elif sender.isdigit() or sender == '.': #如果是数字或小数点，继续读
                 CAL[-1].curr_num_text+=sender
@@ -167,7 +175,8 @@ class Calculator(QMainWindow):
                 elif sender ==")":
                     ans=CAL[-1].res
                     CAL.pop()
-                    CAL[-1].curr_num=ans
+                    CAL[-1].curr_num=self.functions[FUNC[-1]](ans)
+                    FUNC.pop()
 
             elif (sender=="*" or sender=="/"):  #遇到*/，记录在prev_sym和prev_num中
                 if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
