@@ -23,7 +23,7 @@ class expression(): #表达式类，用来计算一个形如(a ± b */ c ^ d)的
     def Eprint(self):
         print("[{0},{1},{2},{3}]".format(self.res,self.prev_num,self.base_num,self.curr_num))
 #利用栈结构来处理括号嵌套.每遇到'('就把当前的expression对象入栈，在栈顶新开一个expression对象处理当前的括号.每遇到')'就出栈，处理上一级括号
-#初始化
+#栈初始化
 EXP=expression()
 CAL=[]
 CAL.append(EXP)
@@ -59,7 +59,7 @@ class Calculator(QMainWindow):
         #初始化“设置”选项卡
         self.setting_dialog=SETTINGS()
 
-        self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 'x^y', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
+        self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 'exp', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
         self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
 
         #定义常量e与pi，有小数和符号两种类型，self.constants根据self.setting_dialog.sym来判断指向符号类型的还是小数类型的
@@ -68,8 +68,8 @@ class Calculator(QMainWindow):
         self.constants = self.sym_const if self.setting_dialog.sym else self.num_const
 
         #利用lambda表达式给出函数对应的句柄，写成字典的形式，方便调用
-        self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x)}
-        self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan', '|x|':'abs'}
+        self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
+        self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan', '|x|':'abs', 'exp':'exp'}
 
         positions = [(i+20,j) for i in range(7) for j in range(5)]
         
@@ -94,6 +94,8 @@ class Calculator(QMainWindow):
         grid.addWidget(self.label_ans, 10, 0, 1, 5)
         self.label_ans.setAlignment(Qt.AlignRight)
 
+        self.mem=[]
+
         widget = QWidget()
         widget.setLayout(grid)
         self.setCentralWidget(widget)
@@ -109,108 +111,130 @@ class Calculator(QMainWindow):
         self.constants = self.sym_const if self.setting_dialog.sym else self.num_const
         if self.restart:    #如果需要重开，则清除CAL栈
             CAL.clear()
+            FUNC.clear()
             EXP=expression()
             CAL.append(EXP)
             self.restart=False
             self.exp=""
+            self.mem.clear()
         
         sender=self.sender().text() #判断按下了哪个button
         if sender == "CE":
             self.restart=True
             self.label_exp.setText("")
             self.label_ans.setText("")
+            self.mem.clear()
             return None
 
-        elif sender in self.constants.keys():   #按下的是pi或e等常量
-            CAL[-1].curr_num=self.constants[sender]
-            self.exp+=sender
+        elif sender == "Bck":
+            if len(self.mem)>0:
+                self.mem.pop()
+            self.compute(self.mem)
+        else:
+            self.mem.append(sender)
+            print(self.mem)
+            self.compute(self.mem)
 
-        elif sender in self.functions.keys():   #遇到函数
-            temp=expression()           #新开一个expression对象压入CAL栈
-            CAL.append(temp)            
-            FUNC.append(sender)         #将函数记录到函数栈里面
-            self.exp=self.exp+self.function_label[sender]+'('
+    def compute(self,list):
+        if not list:
+            self.label_exp.setText("")
+            self.label_ans.setText("")
+            return None
+        self.exp=""
+        CAL.clear()
+        FUNC.clear()
+        EXP=expression()
+        CAL.append(EXP)
+        for sender in list:
+            if sender in self.constants.keys():   #按下的是pi或e等常量
+                CAL[-1].curr_num=self.constants[sender]
+                self.exp+=sender
 
-        elif sender in self.operators:  #如果按下的是运算符
-            self.exp=self.exp+sender
-            self.restart=False
+            elif sender in self.functions.keys():   #遇到函数
+                temp=expression()           #新开一个expression对象压入CAL栈
+                CAL.append(temp)            
+                FUNC.append(sender)         #将函数记录到函数栈里面
+                self.exp=self.exp+self.function_label[sender]+'('
 
-            if sender=="(":    #新开一个expression类压入CAL栈,同时函数栈压入空字符串
-                temp=expression()
-                CAL.append(temp)
-                FUNC.append("")
+            elif sender in self.operators:  #如果按下的是运算符
+                self.exp=self.exp+sender
+                self.restart=False
 
-            elif sender.isdigit() or sender == '.': #如果是数字或小数点，继续读
-                CAL[-1].curr_num_text+=sender
+                if sender=="(":    #新开一个expression类压入CAL栈,同时函数栈压入空字符串
+                    temp=expression()
+                    CAL.append(temp)
+                    FUNC.append("")
 
-            elif (sender=="+" or sender=="-" or sender==")" or sender=="="):    #遇到+-)=，进行计算
-                if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
-                    CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
+                elif sender.isdigit() or sender == '.': #如果是数字或小数点，继续读
+                    CAL[-1].curr_num_text+=sender
 
-                if (CAL[-1].base_num!=None):                                #再结算^运算
-                    CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
-                    CAL[-1].base_num=None
+                elif (sender=="+" or sender=="-" or sender==")" or sender=="="):    #遇到+-)=，进行计算
+                    if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
+                        CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
 
-                sgn=-1 if (CAL[-1].prev_sym=="-") else 1
+                    if (CAL[-1].base_num!=None):                                #再结算^运算
+                        CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
+                        CAL[-1].base_num=None
 
-                if (CAL[-1].curr_sym==""):                                  #再结算*/运算
-                    CAL[-1].res+=CAL[-1].curr_num*sgn
+                    sgn=-1 if (CAL[-1].prev_sym=="-") else 1
 
-                elif (CAL[-1].curr_sym=="*"):
-                    CAL[-1].res=CAL[-1].res+sgn*CAL[-1].curr_num*CAL[-1].prev_num
+                    if (CAL[-1].curr_sym==""):                                  #再结算*/运算
+                        CAL[-1].res+=CAL[-1].curr_num*sgn
 
-                elif (CAL[-1].curr_sym=="/"):
-                    CAL[-1].res=CAL[-1].res+sgn*CAL[-1].prev_num/CAL[-1].curr_num
+                    elif (CAL[-1].curr_sym=="*"):
+                        CAL[-1].res=CAL[-1].res+sgn*CAL[-1].curr_num*CAL[-1].prev_num
 
-                CAL[-1].prev_sym=sender
-                CAL[-1].curr_sym=""
-                CAL[-1].prev_num=CAL[-1].curr_num=None
-                CAL[-1].curr_num_text=""
-
-                if sender == "=":
-                    self.restart=True
-                elif sender ==")":
-                    ans=CAL[-1].res
-                    CAL.pop()
-                    CAL[-1].curr_num=self.functions[FUNC[-1]](ans)
-                    FUNC.pop()
-
-            elif (sender=="*" or sender=="/"):  #遇到*/，记录在prev_sym和prev_num中
-                if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
-                    CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
-                
-                if (CAL[-1].base_num!=None):                                #再结算^运算
-                    CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
-                    CAL[-1].base_num=None
-
-                if CAL[-1].prev_num==None:
-                    CAL[-1].prev_num=CAL[-1].curr_num
-
-                else:
-                    if (CAL[-1].curr_sym=="*"):
-                        CAL[-1].prev_num=CAL[-1].prev_num*CAL[-1].curr_num
                     elif (CAL[-1].curr_sym=="/"):
-                        CAL[-1].prev_num=CAL[-1].prev_num/CAL[-1].curr_num
-                CAL[-1].curr_sym=sender
-                CAL[-1].curr_num=None
-                CAL[-1].curr_num_text=""
+                        CAL[-1].res=CAL[-1].res+sgn*CAL[-1].prev_num/CAL[-1].curr_num
 
-            elif (sender=="^"): #遇到^，
-                if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
-                    CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
-                if (CAL[-1].base_num!=None):                                #再结算^运算
-                    CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
-            
-                CAL[-1].base_num=CAL[-1].curr_num
-                CAL[-1].curr_num=None
-                CAL[-1].curr_num_text=""
+                    CAL[-1].prev_sym=sender
+                    CAL[-1].curr_sym=""
+                    CAL[-1].prev_num=CAL[-1].curr_num=None
+                    CAL[-1].curr_num_text=""
+
+                    if sender == "=":
+                        self.restart=True
+                    elif sender ==")":
+                        ans=CAL[-1].res
+                        CAL.pop()
+                        CAL[-1].curr_num=self.functions[FUNC[-1]](ans)
+                        FUNC.pop()
+
+                elif (sender=="*" or sender=="/"):  #遇到*/，记录在prev_sym和prev_num中
+                    if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
+                        CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
+                    
+                    if (CAL[-1].base_num!=None):                                #再结算^运算
+                        CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
+                        CAL[-1].base_num=None
+
+                    if CAL[-1].prev_num==None:
+                        CAL[-1].prev_num=CAL[-1].curr_num
+
+                    else:
+                        if (CAL[-1].curr_sym=="*"):
+                            CAL[-1].prev_num=CAL[-1].prev_num*CAL[-1].curr_num
+                        elif (CAL[-1].curr_sym=="/"):
+                            CAL[-1].prev_num=CAL[-1].prev_num/CAL[-1].curr_num
+                    CAL[-1].curr_sym=sender
+                    CAL[-1].curr_num=None
+                    CAL[-1].curr_num_text=""
+
+                elif (sender=="^"): #遇到^，
+                    if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
+                        CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
+                    if (CAL[-1].base_num!=None):                                #再结算^运算
+                        CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
                 
-            
-        #输出结果与格式控制
-        self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
-        self.label_exp.setText(self.exp)
-        self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
-        self.label_ans.setText("{0}".format(CAL[0].res))
+                    CAL[-1].base_num=CAL[-1].curr_num
+                    CAL[-1].curr_num=None
+                    CAL[-1].curr_num_text=""
+                
+            #输出结果与格式控制
+            self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
+            self.label_exp.setText(self.exp)
+            self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
+            self.label_ans.setText("{0}".format(CAL[0].res))
         
 
     def show_option(self):
