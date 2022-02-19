@@ -188,7 +188,6 @@ class IntFrame(QMainWindow):
 
         self.setGeometry(300, 300, 350, 500)
         self.setWindowTitle('输入定积分')    
-        self.show()
 
     def Render(self):
         if self.stackedWidget.currentIndex() == 0:
@@ -290,13 +289,7 @@ def tex2svg(formula, fontsize=12, dpi=1):
     return output.read()
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    the_mainwindow = Frame()
-    the_mainwindow.show()
-    sys.exit(app.exec_())
-
-
+'''
 constants = {'e':sympy.E, 'pi':sympy.pi}
 op = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
 function_handle = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
@@ -396,4 +389,4 @@ def str2sym(List):
     # CAL[-1].curr_num_text=""
 
     return CAL[0].res
-
+'''
