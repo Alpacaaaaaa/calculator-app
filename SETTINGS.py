@@ -35,7 +35,7 @@ class SETTINGS(QWidget):
         grid.addWidget(self.deg,1,2)
         self.rad.toggled.connect(self.angle_toggled)
 
-        self.setGeometry(300, 300, 300, 150)
+        # self.setGeometry(300, 300, 300, 150)
         self.setWindowTitle('设置')    
 
         self.sym=False
