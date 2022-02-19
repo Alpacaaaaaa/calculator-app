@@ -2,7 +2,6 @@
 输入定积分弹窗的实现
 现存问题：对不合法表达式抛异常；三重积分积分顺序；界面太丑了！！！svg图大小
 '''
-from calculator import expression
 import sys
 from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QMenu, QAction, QLineEdit, QTextEdit, QGridLayout, QApplication, QStackedWidget, QPushButton, QMainWindow)
 from PyQt5 import QtSvg
@@ -12,7 +11,7 @@ from PyQt5.QtSvg import QSvgWidget
 from io import BytesIO
 import matplotlib.pyplot as plt
 
-class Frame(QMainWindow):
+class IntFrame(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setWindowTitle('插入定积分')
