@@ -234,6 +234,7 @@ class Calculator(QMainWindow):
                     CAL[-1].curr_num_text=""
             elif type(sender)!=type(''):
                 CAL[-1].curr_num = sender
+                self.exp = self.exp + '(...)'
                 
             #输出结果与格式控制
             self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
