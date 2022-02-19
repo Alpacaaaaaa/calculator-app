@@ -1,7 +1,6 @@
 '''
-尝试加入函数运算.
-现存问题：
-"设置"选项卡里面角度/弧度转换选项还没有实现，然后反三角函数输出格式(符号/小数)也有点小问题，以及'Bck'键不可用，以及没法抛异常，输入奇怪的东西会崩掉
+寄，轮子造重了
+添加定积分输入模块，但暂时还不能显示积分表达式，因为表达式那块用的还是qlabel
 '''
 import numpy as np
 import sys
@@ -10,6 +9,7 @@ from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLa
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QFont, QIcon
 from SETTINGS import SETTINGS
+from integral import IntFrame
 
 class expression(): #表达式类，用来计算一个形如(a ± b */ c ^ d)的表达式的值。
     def __init__(self):
@@ -50,14 +50,19 @@ class Calculator(QMainWindow):
         #工具栏选项
         #“设置”选项卡
         settings = QAction('设置', self)
-        # settings.setShortcut('Alt+S')
         settings.triggered.connect(self.show_option)
+        #“积分”选项卡
+        dint_input = QAction('定积分', self)
+        dint_input.triggered.connect(self.integral_input)
 
         self.toolbar = self.addToolBar('toolbar')
         self.toolbar.addAction(settings)
+        self.toolbar.addAction(dint_input)
 
-        #初始化“设置”选项卡
-        self.setting_dialog=SETTINGS()
+        #初始化“设置”“积分”选项卡
+        self.setting_dialog = SETTINGS()
+        self.int_dialog = IntFrame()
+        self.int_dialog.Signal.connect(self.read_integral)
 
         self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 'exp', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
         self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
@@ -132,7 +137,6 @@ class Calculator(QMainWindow):
             self.compute(self.mem)
         else:
             self.mem.append(sender)
-            print(self.mem)
             self.compute(self.mem)
 
     def compute(self,list):
@@ -186,7 +190,6 @@ class Calculator(QMainWindow):
 
                     elif (CAL[-1].curr_sym=="/"):
                         CAL[-1].res=CAL[-1].res+sgn*CAL[-1].prev_num/CAL[-1].curr_num
-
                     CAL[-1].prev_sym=sender
                     CAL[-1].curr_sym=""
                     CAL[-1].prev_num=CAL[-1].curr_num=None
@@ -229,6 +232,8 @@ class Calculator(QMainWindow):
                     CAL[-1].base_num=CAL[-1].curr_num
                     CAL[-1].curr_num=None
                     CAL[-1].curr_num_text=""
+            elif type(sender)!=type(''):
+                CAL[-1].curr_num = sender
                 
             #输出结果与格式控制
             self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
@@ -239,7 +244,11 @@ class Calculator(QMainWindow):
 
     def show_option(self):
         self.setting_dialog.show()
-        
+    def integral_input(self):
+        self.int_dialog.show()
+    def read_integral(self):
+        self.mem.append(self.int_dialog.ans)
+
 
 if __name__ == '__main__':
 

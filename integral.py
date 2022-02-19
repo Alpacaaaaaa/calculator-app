@@ -4,14 +4,14 @@
 '''
 import sys
 from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QMenu, QAction, QLineEdit, QTextEdit, QGridLayout, QApplication, QStackedWidget, QPushButton, QMainWindow)
-from PyQt5 import QtSvg
+from PyQt5 import QtSvg, QtCore
 import sympy
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtSvg import QSvgWidget
-from io import BytesIO
-import matplotlib.pyplot as plt
+from str2svg import tex2svg
 
 class IntFrame(QMainWindow):
+    Signal = QtCore.pyqtSignal(str)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setWindowTitle('插入定积分')
@@ -54,6 +54,7 @@ class IntFrame(QMainWindow):
 
         self.resize(500,700)
         self.ans = None
+
     def int1(self):
         self.stackedWidget.setCurrentIndex(0)
 
@@ -265,28 +266,10 @@ class IntFrame(QMainWindow):
                     self.ans=sympy.integrate(f, (y, lowerbound2, upperbound2), (x, lowerbound, upperbound), (z, lowerbound3, upperbound3))
                 else:
                     self.ans=sympy.integrate(f,(x, lowerbound, upperbound),(z, lowerbound3, upperbound3), (y, lowerbound2, upperbound2))
-
+        self.Signal.emit('1')
         self.close()
-        print(self.ans)
+        # print(self.ans)
 
-    
-
-
-# matplotlib: force computer modern font set
-plt.rc('mathtext', fontset='cm')
-
-#将tex公式渲染成SVG格式图片.入口参数：string formula为tex公式代码，fontsize为字号，dpi为分辨率，越小越清晰
-def tex2svg(formula, fontsize=12, dpi=1):
-    fig = plt.figure(figsize=(0.001, 0.001))
-    fig.text(0, 0, r'${}$'.format(formula), fontsize=fontsize)
-
-    output = BytesIO()
-    fig.savefig(output, dpi=dpi, transparent=True, format='svg',
-                bbox_inches='tight', pad_inches=0.0)
-    plt.close(fig)
-
-    output.seek(0)
-    return output.read()
 
 
 '''
