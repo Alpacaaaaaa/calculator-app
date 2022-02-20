@@ -1,6 +1,5 @@
 '''
-寄，轮子造重了
-添加定积分输入模块，但暂时还不能显示积分表达式，因为表达式那块用的还是qlabel
+完善极限模块引入部分；初步增加实时显示结果（待完善）；修复bug
 '''
 import numpy as np
 import sys
@@ -10,6 +9,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import QFont, QIcon
 from SETTINGS import SETTINGS
 from integral import IntFrame
+from limit import lim
 
 class expression(): #表达式类，用来计算一个形如(a ± b */ c ^ d)的表达式的值。
     def __init__(self):
@@ -54,15 +54,21 @@ class Calculator(QMainWindow):
         #“积分”选项卡
         dint_input = QAction('定积分', self)
         dint_input.triggered.connect(self.integral_input)
+        #“极限”选项卡
+        lim_input = QAction("极限",self)
+        lim_input.triggered.connect(self.lim_input)
 
         self.toolbar = self.addToolBar('toolbar')
         self.toolbar.addAction(settings)
         self.toolbar.addAction(dint_input)
+        self.toolbar.addAction(lim_input)
 
-        #初始化“设置”“积分”选项卡
+        #初始化“设置”“积分”“极限”选项卡
         self.setting_dialog = SETTINGS()
         self.int_dialog = IntFrame()
         self.int_dialog.Signal.connect(self.read_integral)
+        self.lim_dialog = lim()
+        self.lim_dialog.Signal.connect(self.read_lim)
 
         self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 'exp', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
         self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
@@ -149,6 +155,10 @@ class Calculator(QMainWindow):
         FUNC.clear()
         EXP=expression()
         CAL.append(EXP)
+
+        if len(CAL)==1 and (type(list[-1])!=type('') or list[-1].isdigit() or type(list[-1]) != type('')):
+            list.append('flag')
+
         for sender in list:
             if sender in self.constants.keys():   #按下的是pi或e等常量
                 CAL[-1].curr_num=self.constants[sender]
@@ -160,8 +170,9 @@ class Calculator(QMainWindow):
                 FUNC.append(sender)         #将函数记录到函数栈里面
                 self.exp=self.exp+self.function_label[sender]+'('
 
-            elif sender in self.operators:  #如果按下的是运算符
-                self.exp=self.exp+sender
+            elif sender in self.operators or sender=='flag':  #如果按下的是运算符
+                if sender!='flag':
+                    self.exp=self.exp+sender
                 self.restart=False
 
                 if sender=="(":    #新开一个expression类压入CAL栈,同时函数栈压入空字符串
@@ -172,7 +183,7 @@ class Calculator(QMainWindow):
                 elif sender.isdigit() or sender == '.': #如果是数字或小数点，继续读
                     CAL[-1].curr_num_text+=sender
 
-                elif (sender=="+" or sender=="-" or sender==")" or sender=="="):    #遇到+-)=，进行计算
+                elif (sender=="+" or sender=="-" or sender==")" or sender=="=" or sender=='flag'):    #遇到+-)=，进行计算
                     if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
                         CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
 
@@ -235,12 +246,16 @@ class Calculator(QMainWindow):
             elif type(sender)!=type(''):
                 CAL[-1].curr_num = sender
                 self.exp = self.exp + '(...)'
-                
-            #输出结果与格式控制
-            self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
-            self.label_exp.setText(self.exp)
-            self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
-            self.label_ans.setText("{0}".format(CAL[0].res))
+
+        #输出结果与格式控制
+        self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
+        self.label_exp.setText(self.exp)
+        self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
+        self.label_ans.setText("{0}".format(CAL[0].res))
+        if list[-1]=='flag':
+            list.pop()
+
+
         
 
     def show_option(self):
@@ -248,7 +263,31 @@ class Calculator(QMainWindow):
     def integral_input(self):
         self.int_dialog.show()
     def read_integral(self):
+        if self.restart:    #如果需要重开，则清除CAL栈
+            CAL.clear()
+            FUNC.clear()
+            EXP=expression()
+            CAL.append(EXP)
+            self.restart=False
+            self.exp=""
+            self.mem.clear()
         self.mem.append(self.int_dialog.ans)
+        self.compute(self.mem)
+
+    def lim_input(self):
+        self.lim_dialog.show()
+    def read_lim(self):
+        if self.restart:    #如果需要重开，则清除CAL栈
+            CAL.clear()
+            FUNC.clear()
+            EXP=expression()
+            CAL.append(EXP)
+            self.restart=False
+            self.exp=""
+            self.mem.clear()
+
+        self.mem.append(self.lim_dialog.ans)
+        self.compute(self.mem)
 
 
 if __name__ == '__main__':
