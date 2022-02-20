@@ -5,10 +5,11 @@
 import sympy
 from PyQt5.QtWidgets import (QWidget, QLabel, QAction, QLineEdit, QTextEdit, QGridLayout, QApplication, QStackedWidget, QPushButton, QMainWindow)
 from PyQt5 import QtSvg
-from PyQt5.QtCore import *
+from PyQt5 import QtCore
 from str2svg import tex2svg
-import sys
+
 class lim(QWidget):
+    Signal = QtCore.pyqtSignal(str)
     def __init__(self):
         super().__init__()
 
@@ -16,14 +17,14 @@ class lim(QWidget):
         self.setLayout(grid)
 
         label1 = QLabel("极限过程：x→")
-        label1.setAlignment(Qt.AlignCenter)
+        label1.setAlignment(QtCore.Qt.AlignCenter)
         grid.addWidget(label1, 0, 0)
 
         self.process = QLineEdit()
         grid.addWidget(self.process, 0, 1)
 
         label2 = QLabel("函数f(x)")
-        label2.setAlignment(Qt.AlignCenter)
+        label2.setAlignment(QtCore.Qt.AlignCenter)
         grid.addWidget(label2, 1, 0, 2, 1)
 
         self.func = QTextEdit()
@@ -40,7 +41,6 @@ class lim(QWidget):
         grid.addWidget(confirm, 9, 1)
 
         self.setWindowTitle('输入极限')   
-        self.show()
 
     def Render(self):
         p = sympy.latex(sympy.sympify(self.process.text())) if self.process.text().strip() else ''
@@ -51,11 +51,10 @@ class lim(QWidget):
         self.svgWidget.setFixedHeight(40)
         
     def Conf(self):
-        return None
-
-
-if __name__ == '__main__':
-
-    app = QApplication(sys.argv)
-    ex = lim()
-    sys.exit(app.exec_())
+        p = sympy.sympify(self.process.text()) if self.process.text().strip() else ''
+        f = sympy.sympify(self.func.toPlainText()) if self.func.toPlainText().strip() else ''
+        self.latex_code=r'\lim_{x\to '+sympy.latex(p)+'}'+sympy.latex(f)
+        x = sympy.Symbol('x')
+        self.ans=sympy.limit(f, x, p)
+        self.Signal.emit('1')
+        self.close()
