@@ -1,5 +1,5 @@
 '''
-完善极限模块引入部分；初步增加实时显示结果（待完善）；修复bug
+添加输入级数和模块
 '''
 import numpy as np
 import sys
@@ -10,6 +10,7 @@ from PyQt5.QtGui import QFont, QIcon
 from SETTINGS import SETTINGS
 from integral import IntFrame
 from limit import lim
+from series import series
 
 class expression(): #表达式类，用来计算一个形如(a ± b */ c ^ d)的表达式的值。
     def __init__(self):
@@ -57,18 +58,24 @@ class Calculator(QMainWindow):
         #“极限”选项卡
         lim_input = QAction("极限",self)
         lim_input.triggered.connect(self.lim_input)
+        #“级数和”选项卡
+        serie_input = QAction("级数和",self)
+        serie_input.triggered.connect(self.serie_input)
 
         self.toolbar = self.addToolBar('toolbar')
         self.toolbar.addAction(settings)
         self.toolbar.addAction(dint_input)
         self.toolbar.addAction(lim_input)
+        self.toolbar.addAction(serie_input)
 
-        #初始化“设置”“积分”“极限”选项卡
+        #初始化“设置”“积分”“极限”“级数和”选项卡
         self.setting_dialog = SETTINGS()
         self.int_dialog = IntFrame()
         self.int_dialog.Signal.connect(self.read_integral)
         self.lim_dialog = lim()
         self.lim_dialog.Signal.connect(self.read_lim)
+        self.serie_dialog = series()
+        self.serie_dialog.Signal.connect(self.read_serie)
 
         self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 'exp', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
         self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
@@ -273,7 +280,6 @@ class Calculator(QMainWindow):
             self.mem.clear()
         self.mem.append(self.int_dialog.ans)
         self.compute(self.mem)
-
     def lim_input(self):
         self.lim_dialog.show()
     def read_lim(self):
@@ -287,6 +293,20 @@ class Calculator(QMainWindow):
             self.mem.clear()
 
         self.mem.append(self.lim_dialog.ans)
+        self.compute(self.mem)
+    def serie_input(self):
+        self.serie_dialog.show()
+    def read_serie(self):
+        if self.restart:    #如果需要重开，则清除CAL栈
+            CAL.clear()
+            FUNC.clear()
+            EXP=expression()
+            CAL.append(EXP)
+            self.restart=False
+            self.exp=""
+            self.mem.clear()
+
+        self.mem.append(self.serie_dialog.ans)
         self.compute(self.mem)
 
 
