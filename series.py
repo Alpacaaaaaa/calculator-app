@@ -49,7 +49,6 @@ class series(QWidget):
         grid.addWidget(confirm, 10, 1)
 
         self.setWindowTitle('输入级数和')   
-        self.show()
 
     def Render(self):
         p = sympy.latex(sympy.sympify(self.term.text())) if self.term.text().strip() else ''
