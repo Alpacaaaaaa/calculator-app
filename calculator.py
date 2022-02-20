@@ -119,7 +119,7 @@ class Calculator(QMainWindow):
     def INPUT(self):
         global CAL
 
-        self.constants = self.sym_const if self.setting_dialog.sym else self.num_const
+        self.constants = self.sym_const if self.setting_dialog.sym else self.num_const  #这里判断使用哪个常数词典：符号的还是数值的
         if self.restart:    #如果需要重开，则清除CAL栈
             CAL.clear()
             FUNC.clear()
@@ -145,7 +145,7 @@ class Calculator(QMainWindow):
             self.mem.append(sender)
             self.compute(self.mem)
 
-    def compute(self,list):
+    def compute(self,list): #传入一个list对象——也就是self.mem，根据这个list对象解析出有效的表达式并计算
         if not list:
             self.label_exp.setText("")
             self.label_ans.setText("")
@@ -156,8 +156,11 @@ class Calculator(QMainWindow):
         EXP=expression()
         CAL.append(EXP)
 
-        if len(CAL)==1 and (type(list[-1])!=type('') or list[-1].isdigit() or type(list[-1]) != type('')):
-            list.append('flag')
+        placeholder = ['flag', '_)']    #定义占位符列表.相比于一个有效的计算表达式，一个只输入了一半的表达式缺少了1.结尾处若干个匹配的右括号2.结尾的'='.因此，这里把这些缺少的都补上，这样就可以让输入一半的表达式变有效
+        if list[-1]!='=':
+            for i in range(list.count('(')-list.count(')')):
+                list.append('_)')       #'_)'对应右括号，这里把括号全部匹配
+            list.append('flag')         #'flag'对应'='
 
         for sender in list:
             if sender in self.constants.keys():   #按下的是pi或e等常量
@@ -170,8 +173,8 @@ class Calculator(QMainWindow):
                 FUNC.append(sender)         #将函数记录到函数栈里面
                 self.exp=self.exp+self.function_label[sender]+'('
 
-            elif sender in self.operators or sender=='flag':  #如果按下的是运算符
-                if sender!='flag':
+            elif sender in self.operators or sender in placeholder:  #如果按下的是运算符
+                if not(sender in placeholder):
                     self.exp=self.exp+sender
                 self.restart=False
 
@@ -183,9 +186,9 @@ class Calculator(QMainWindow):
                 elif sender.isdigit() or sender == '.': #如果是数字或小数点，继续读
                     CAL[-1].curr_num_text+=sender
 
-                elif (sender=="+" or sender=="-" or sender==")" or sender=="=" or sender=='flag'):    #遇到+-)=，进行计算
+                elif (sender=="+" or sender=="-" or sender==")" or sender=="=" or sender in placeholder):    #遇到+-)=，进行计算
                     if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
-                        CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
+                        CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else (1 if (CAL[-1].base_num!=None or CAL[-1].curr_sym=='*' or CAL[-1].curr_sym=='/') else 0)
 
                     if (CAL[-1].base_num!=None):                                #再结算^运算
                         CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
@@ -208,7 +211,7 @@ class Calculator(QMainWindow):
 
                     if sender == "=":
                         self.restart=True
-                    elif sender ==")":
+                    elif sender ==")" or sender == '_)':
                         ans=CAL[-1].res
                         CAL.pop()
                         CAL[-1].curr_num=self.functions[FUNC[-1]](ans)
@@ -252,11 +255,8 @@ class Calculator(QMainWindow):
         self.label_exp.setText(self.exp)
         self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
         self.label_ans.setText("{0}".format(CAL[0].res))
-        if list[-1]=='flag':
-            list.pop()
-
-
-        
+        while list[-1] in placeholder:
+            list.pop()   
 
     def show_option(self):
         self.setting_dialog.show()
