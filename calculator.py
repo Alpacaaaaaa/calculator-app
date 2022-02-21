@@ -80,10 +80,8 @@ class Calculator(QMainWindow):
         self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 'exp', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
         self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
 
-        #定义常量e与pi，有小数和符号两种类型，self.constants根据self.setting_dialog.sym来判断指向符号类型的还是小数类型的
-        self.sym_const = {'e':sympy.E, 'pi':sympy.pi}
-        self.num_const = {'e':2.718281828459, 'pi':3.141592653589}
-        self.constants = self.sym_const if self.setting_dialog.sym else self.num_const
+        #定义常量e与pi
+        self.constants = {'e':sympy.E, 'pi':sympy.pi}
 
         #利用lambda表达式给出函数对应的句柄，写成字典的形式，方便调用
         self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
@@ -126,7 +124,6 @@ class Calculator(QMainWindow):
     def INPUT(self):
         global CAL
 
-        self.constants = self.sym_const if self.setting_dialog.sym else self.num_const  #这里判断使用哪个常数词典：符号的还是数值的
         if self.restart:    #如果需要重开，则清除CAL栈
             CAL.clear()
             FUNC.clear()
@@ -261,7 +258,7 @@ class Calculator(QMainWindow):
         self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
         self.label_exp.setText(self.exp)
         self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
-        self.label_ans.setText("{0}".format(CAL[0].res))
+        self.label_ans.setText("{0}".format(CAL[0].res.evalf() if (not self.setting_dialog.sym) and (not type(CAL[0].res) in [type(1),type(0.1)]) else CAL[0].res))
         while list[-1] in placeholder:
             list.pop()   
 
