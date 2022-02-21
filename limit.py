@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QLabel, QAction, QLineEdit, QTextEdit, QGr
 from PyQt5 import QtSvg
 from PyQt5 import QtCore
 from str2svg import tex2svg
-
+inf = {'+infty':+sympy.oo, '-infty':-sympy.oo, 'infty':sympy.oo}
 class lim(QWidget):
     Signal = QtCore.pyqtSignal(str)
     def __init__(self):
@@ -31,7 +31,7 @@ class lim(QWidget):
         grid.addWidget(self.func, 1, 1, 2, 1)
 
         self.svgWidget = QtSvg.QSvgWidget()
-        grid.addWidget(self.svgWidget, 3, 0, 5, 2)
+        grid.addWidget(self.svgWidget, 3, 0, 5, 2, QtCore.Qt.AlignCenter)
 
         preview = QPushButton("预览")
         confirm = QPushButton("确认")
@@ -43,15 +43,23 @@ class lim(QWidget):
         self.setWindowTitle('输入极限')   
 
     def Render(self):
-        p = sympy.latex(sympy.sympify(self.process.text())) if self.process.text().strip() else ''
+        if self.process.text() in inf:
+            p = sympy.latex(inf[self.process.text()])
+        else:
+            p = sympy.latex(sympy.sympify(self.process.text())) if self.process.text().strip() else ''
+        
         f = sympy.latex(sympy.sympify(self.func.toPlainText())) if self.func.toPlainText().strip() else ''
         latex_code = r'\lim_{x\to '+p+'}'+f
         self.svgWidget.load(tex2svg(latex_code,1))
         self.svgWidget.show()
         self.svgWidget.setFixedHeight(40)
+        self.svgWidget.setFixedWidth(100)
         
     def Conf(self):
-        p = sympy.sympify(self.process.text()) if self.process.text().strip() else ''
+        if self.process.text() in inf:
+            p = inf[self.process.text()]
+        else:
+            p = sympy.sympify(self.process.text()) if self.process.text().strip() else ''
         f = sympy.sympify(self.func.toPlainText()) if self.func.toPlainText().strip() else ''
         self.latex_code=r'\lim_{x\to '+sympy.latex(p)+'}'+sympy.latex(f)
         x = sympy.Symbol('x')
