@@ -1,27 +1,18 @@
 '''
 
-参考王神代码 增加了常用的字母按键
+部分按键有bug
 
-因为sympy运算对于部分数值运算同样有效
-
-所以改进了王神计算中自己用栈解析表达式的部分
-
-直接用sympify转化 功能上与模式一中有部分重合
-
-方程的部分还没有施工完成
-
-关于非法输入的弹窗部分也有点小问题
-
-目前可以进行基本代数式的化简
+界面优化
 
 '''
 
+from signal import signal
 import numpy as np
 import sys
 import sympy
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLabel, QAction, QMainWindow
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import *
 from formula import *
 
 
@@ -46,6 +37,18 @@ class calculator_mode2(QMainWindow):
         self.Layout = QVBoxLayout(self.centralwidget)
         self.Layout.addWidget(self.stackedwiget)
 
+
+        # 设置选项栏
+        formula_setting = QAction('方程', self)
+        self.formula = Formula()
+        formula_setting.triggered.connect(self.formula.input_n)
+        self.formula.Signal.connect(self.read_formula) 
+
+
+        self.toolbar = self.addToolBar('toolbar ')
+        self.toolbar.addAction(formula_setting)
+
+
         self.form1 = QWidget()
         self.setup1()
         
@@ -53,7 +56,6 @@ class calculator_mode2(QMainWindow):
         self.stackedwiget.addWidget(self.form1)
        
 
-        self.resize(500,500)
         
 
     def int1(self):
@@ -81,7 +83,6 @@ class calculator_mode2(QMainWindow):
         # 键盘
         self.names = [
              'a', 'b', 'c', 'x', 'y', 'z',
-             'A', 'B', 'C', 'X', 'Y', 'Z',
              'arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 
              'lg', 'ln', '(', ')', 'exp','x!',
              '7', '8', '9','|x|', 'CE', 'Bck',
@@ -91,7 +92,6 @@ class calculator_mode2(QMainWindow):
        
         self.operators = [
             'a', 'b', 'c', 'x', 'y', 'z',
-             'A', 'B', 'C', 'X', 'Y', 'Z',
             '(', ')', '7', '8', '9',
             '/', '4', '5', '6', '*', '1', '2', 
             '3', '-', '0', '.', '+', '=','^']
@@ -111,7 +111,13 @@ class calculator_mode2(QMainWindow):
             if name in self.operators:
                 button.setShortcut(name)
             
-            button.clicked.connect(self.INPUT)
+            if name == 'solve':
+                button.clicked.connect(self.Solve)
+                
+
+            else:
+                button.clicked.connect(self.INPUT)
+            
             self.layout1.addWidget(button, *position)
 
     def INPUT(self):
@@ -152,7 +158,7 @@ class calculator_mode2(QMainWindow):
         self.ans = ""
         for sender in list:
             if sender == "solve": 
-                self.Solve()
+                continue
 
             elif sender == "^":
                 self.exp = self.exp + "^"
@@ -175,24 +181,24 @@ class calculator_mode2(QMainWindow):
     def Solve(self):
         
         
-        # 解方程
+        # 解一元简单（符号）方程
         if '=' in self.mem: 
-            '''
-            formula = Formula()
-            formula.input(self.exp) 
-            formula.solve()
-            '''
+            
+            self.ans_list = []
+            self.formula.input_1(self.exp)
 
         # 求解表达式
-        else:
-            self.mem.clear()
+        else: 
             try:
                 self.solve_exp = sympy.sympify(self.exp)
                 self.solve_exp = sympy.simplify(self.solve_exp)
                 self.ans = str(self.solve_exp)
+                #输出结果与格式控制
+                self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
                 self.label_ans.setText(self.ans)
             except:
                 self.illeagal_input_warning()
+            self.mem.clear()
 
 
     def illeagal_input_warning(self):       
@@ -200,7 +206,21 @@ class calculator_mode2(QMainWindow):
         if (reply == QMessageBox.Ok):
             return None
 
+    def read_formula(self):
+        self.ans_list = self.formula.output()
+        print(self.ans_list)
 
+        #输出结果与格式控制
+        self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
+        self.ans = ''
+        for i in range(self.ans_list.__len__()):
+            self.ans = self.ans + '    ' + str(self.ans_list[i])
+                
+        self.label_ans.setText(self.ans)
+        self.mem.clear()
+        
+
+        
 
             
 
