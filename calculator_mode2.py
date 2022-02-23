@@ -1,11 +1,12 @@
 '''
 
-部分按键有bug
+修复自然对数底e被错认为一般符号变量的bug
 
-界面优化
+修复输入出错后会显示之前计算结果的bug
 
 '''
 
+import imp
 from signal import signal
 import numpy as np
 import sys
@@ -14,6 +15,7 @@ from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLa
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from formula import *
+from other_sign import *
 
 
 class calculator_mode2(QMainWindow):
@@ -39,14 +41,21 @@ class calculator_mode2(QMainWindow):
 
 
         # 设置选项栏
+        sign = QAction('其他符号', self)
+        self.other_sign = Other_sign()
+        sign.triggered.connect(self.other_sign.show)
+        self.other_sign.signal.connect(self.read_sign)
+        
+
         formula_setting = QAction('方程', self)
         self.formula = Formula()
         formula_setting.triggered.connect(self.formula.input_n)
-        self.formula.Signal.connect(self.read_formula) 
+        self.formula.Signal[int].connect(self.read_formula) 
 
 
         self.toolbar = self.addToolBar('toolbar ')
         self.toolbar.addAction(formula_setting)
+        self.toolbar.addAction(sign)
 
 
         self.form1 = QWidget()
@@ -54,12 +63,7 @@ class calculator_mode2(QMainWindow):
         
         
         self.stackedwiget.addWidget(self.form1)
-       
-
-        
-
-    def int1(self):
-        self.stackedwiget.setCurrentIndex(0)
+    
 
     def setup1(self):
 
@@ -120,6 +124,7 @@ class calculator_mode2(QMainWindow):
             
             self.layout1.addWidget(button, *position)
 
+
     def INPUT(self):
         
         sender = self.sender().text()
@@ -153,30 +158,38 @@ class calculator_mode2(QMainWindow):
         if not list:
             self.label_exp.setText("")
             self.label_ans.setText("")
-            return None
-        self.exp = ""
-        self.ans = ""
-        for sender in list:
-            if sender == "solve": 
-                continue
+        else:
+            self.exp = ""
+            self.ans = ""
+            for sender in list:
+                if sender == "solve": 
+                    continue
 
-            elif sender == "^":
-                self.exp = self.exp + "^"
-                self.ans = self.ans  + "**"
+                elif sender == "^":
+                    self.exp = self.exp + "^"
+                    self.ans = self.ans  + "**"
 
-            elif sender in self.functions.keys():   
-                self.exp=self.exp+self.function_label[sender]+'('
-                self.ans=self.ans+self.function_label[sender]+'('
+                elif sender in self.functions.keys():   
+                    self.exp=self.exp+self.function_label[sender]+'('
+                    self.ans=self.ans+self.function_label[sender]+'('
 
-            else:
-                self.exp = self.exp + sender
-                self.ans = self.ans + sender
+                elif sender in self.sym_const:
+                    if sender == 'e':
+                        self.exp = self.exp + 'E'
+                        self.ans = self.ans + 'e'
 
-     #输出结果与格式控制
-        self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
-        self.label_exp.setText(self.exp)
-        self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
-        self.label_ans.setText(self.ans)
+                else:
+                    self.exp = self.exp + sender
+                    self.ans = self.ans + sender
+
+        #输出结果与格式控制
+            self.label_exp.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
+            self.label_exp.setText(self.ans)
+            self.label_exp.setAlignment(Qt.AlignRight)
+            self.label_ans.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
+            self.label_ans.setText(self.ans)
+            self.label_ans.setAlignment(Qt.AlignRight)
+
 
     def Solve(self):
         
@@ -193,33 +206,41 @@ class calculator_mode2(QMainWindow):
                 self.solve_exp = sympy.sympify(self.exp)
                 self.solve_exp = sympy.simplify(self.solve_exp)
                 self.ans = str(self.solve_exp)
-                #输出结果与格式控制
-                self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
+                #输出
                 self.label_ans.setText(self.ans)
             except:
                 self.illeagal_input_warning()
             self.mem.clear()
 
 
+    def read_formula(self, flag):
+
+        if flag == 1:
+            self.ans_list = self.formula.output()
+            print(self.ans_list)
+
+            #输出结果与格式控制
+            self.label_ans.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
+            self.ans = ''
+            for i in range(self.ans_list.__len__()):
+                self.ans = self.ans + '    ' + str(self.ans_list[i])
+                    
+            self.label_ans.setText(self.ans)
+            self.mem.clear()
+    
+
+    def read_sign(self):
+        self.mem.append(self.other_sign.sign_output())
+        self.compute(self.mem)
+
+
+    # 异常处理函数
     def illeagal_input_warning(self):       
         reply = QMessageBox.warning(self, "Warning", "不合法的输入！", QMessageBox.Ok)
+        self.exp = ''
+        self.ans = ''
         if (reply == QMessageBox.Ok):
             return None
-
-    def read_formula(self):
-        self.ans_list = self.formula.output()
-        print(self.ans_list)
-
-        #输出结果与格式控制
-        self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
-        self.ans = ''
-        for i in range(self.ans_list.__len__()):
-            self.ans = self.ans + '    ' + str(self.ans_list[i])
-                
-        self.label_ans.setText(self.ans)
-        self.mem.clear()
-        
-
         
 
             
