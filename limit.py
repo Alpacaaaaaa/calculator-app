@@ -21,6 +21,7 @@ class lim(QWidget):
         grid.addWidget(label1, 0, 0)
 
         self.process = QLineEdit()
+        self.process.setPlaceholderText('输入实数或(±)infty表示无穷')
         grid.addWidget(self.process, 0, 1)
 
         label2 = QLabel("函数f(x)")
@@ -28,6 +29,7 @@ class lim(QWidget):
         grid.addWidget(label2, 1, 0, 2, 1)
 
         self.func = QTextEdit()
+        self.func.setPlaceholderText('输入关于x的函数')
         grid.addWidget(self.func, 1, 1, 2, 1)
 
         self.svgWidget = QtSvg.QSvgWidget()

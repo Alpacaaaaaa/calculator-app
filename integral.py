@@ -76,8 +76,11 @@ class IntFrame(QMainWindow):
         func = QLabel('被积函数')
 
         self.uboundEdit = QLineEdit()
+        self.uboundEdit.setPlaceholderText('输入实数或(±)infty表示无穷')
         self.lboundEdit = QLineEdit()
+        self.lboundEdit.setPlaceholderText('输入实数或(±)infty表示无穷')
         self.funcEdit = QTextEdit()
+        self.funcEdit.setPlaceholderText('输入关于x的函数')
         self.grid1 = QGridLayout(self.form1)
         self.grid1.setSpacing(20)
 
@@ -109,10 +112,15 @@ class IntFrame(QMainWindow):
         func = QLabel('被积函数')
 
         self.uboundEdit21 = QLineEdit()
+        self.uboundEdit21.setPlaceholderText('输入表达式或±infty表示无穷')
         self.lboundEdit21 = QLineEdit()
+        self.lboundEdit21.setPlaceholderText('输入表达式或±infty表示无穷')
         self.uboundEdit22 = QLineEdit()
+        self.uboundEdit22.setPlaceholderText('输入表达式或±infty表示无穷')
         self.lboundEdit22 = QLineEdit()
+        self.lboundEdit22.setPlaceholderText('输入表达式或±infty表示无穷')
         self.funcEdit2 = QTextEdit()
+        self.funcEdit2.setPlaceholderText('输入关于x,y的函数')
         self.grid2 = QGridLayout(self.form2)
         self.grid2.setSpacing(20)
 
@@ -152,12 +160,19 @@ class IntFrame(QMainWindow):
         func = QLabel('被积函数')
 
         self.uboundEdit31 = QLineEdit()
+        self.uboundEdit31.setPlaceholderText('输入表达式或±infty表示无穷')
         self.lboundEdit31 = QLineEdit()
+        self.lboundEdit31.setPlaceholderText('输入表达式或±infty表示无穷')
         self.uboundEdit32 = QLineEdit()
+        self.uboundEdit32.setPlaceholderText('输入表达式或±infty表示无穷')
         self.lboundEdit32 = QLineEdit()
+        self.lboundEdit32.setPlaceholderText('输入表达式或±infty表示无穷')
         self.uboundEdit33 = QLineEdit()
+        self.uboundEdit33.setPlaceholderText('输入表达式或±infty表示无穷')
         self.lboundEdit33 = QLineEdit()
+        self.lboundEdit33.setPlaceholderText('输入表达式或±infty表示无穷')
         self.funcEdit3 = QTextEdit()
+        self.funcEdit3.setPlaceholderText('输入关于x,y,z的函数')
         self.grid3 = QGridLayout(self.form3)
         self.grid3.setSpacing(15)
 

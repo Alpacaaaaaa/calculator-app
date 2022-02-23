@@ -22,6 +22,7 @@ class series(QWidget):
         grid.addWidget(label1, 0, 0)
 
         self.term = QLineEdit()
+        self.term.setPlaceholderText('输入整数')
         grid.addWidget(self.term, 0, 1)
 
         label3 = QLabel("求和末项")
@@ -29,6 +30,7 @@ class series(QWidget):
         grid.addWidget(label3, 1, 0)
 
         self.term2 = QLineEdit()
+        self.term2.setPlaceholderText('输入整数，或infty表示无穷')
         grid.addWidget(self.term2, 1, 1)
 
         label2 = QLabel("级数an")
@@ -36,6 +38,7 @@ class series(QWidget):
         grid.addWidget(label2, 2, 0, 2, 1)
 
         self.func = QTextEdit()
+        self.func.setPlaceholderText('输入关于项数n的通项表达式')
         grid.addWidget(self.func, 2, 1, 2, 1)
 
         self.svgWidget = QtSvg.QSvgWidget()
