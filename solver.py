@@ -1,12 +1,10 @@
 '''
 本文件中定义solver类，是数值求解方程（组）的实现
-输出格式有点小问题待改
+优化输出格式
 '''
 
-from tkinter import Variable
 import sympy
 from PyQt5.QtWidgets import (QWidget, QLabel, QAction, QLineEdit, QTextEdit, QGridLayout, QApplication, QStackedWidget, QPushButton, QMainWindow)
-from PyQt5 import QtSvg
 from PyQt5 import QtCore
 import sys
 class solver(QWidget):
@@ -23,13 +21,14 @@ class solver(QWidget):
         label2.setAlignment(QtCore.Qt.AlignLeft)
         self.grid.addWidget(label2, 0, 1, 1, 2)
 
-        label3 = QLabel("解：")
-        label3.setAlignment(QtCore.Qt.AlignLeft)
-        self.grid.addWidget(label3, 0, 3)
+        self.label3 = QLabel("解：")
+        self.label3.setAlignment(QtCore.Qt.AlignLeft)
+        self.grid.addWidget(self.label3, 0, 3)
 
         self.func = []
         self.var = []
         self.roots = []
+        self.ans = None
         for i in range(3):
             f = QLineEdit()
             f.setText('')
@@ -69,6 +68,9 @@ class solver(QWidget):
         self.num += 1
         self.func[self.num].setVisible(True)
         self.var[self.num].setVisible(True)
+        self.func[self.num].setText('')
+        self.var[self.num].setText('')
+        self.roots[self.num].setText('')
 
         if self.num==1:
             self.DEL.setEnabled(True)
@@ -78,6 +80,7 @@ class solver(QWidget):
     def Del(self):
         self.func[self.num].setVisible(False)
         self.var[self.num].setVisible(False)
+        self.roots[self.num].setText('')
         self.num -= 1
 
         if self.num==1:
@@ -91,23 +94,39 @@ class solver(QWidget):
         for i in range(self.num + 1):
             variables.append(sympy.Symbol(self.var[i].text()))
             eq.append(sympy.sympify(self.func[i].text()))
-        # print(variables)
-        ans = sympy.solve(eq, variables)
-        # print(self.num)
-        if not ans:
+        self.ans = sympy.solve(eq, variables)
+        if not self.ans:
             self.roots[0].setText('无解')
-        elif type(ans)==list:
-            if type(ans[0])==tuple:
-                tmp = list(ans[0])
+        elif type(self.ans)==list:
+            self.curr_idx = 0
+            self.label3.setText('解：（{0}/{1}）'.format(self.curr_idx+1,len(self.ans)))
+            if type(self.ans[0])==tuple:
+                tmp = list(self.ans[0])
                 for i in range(self.num + 1):
-                    self.roots[i].setText(self.var[i].text() + '=' + str(round(sympy.N(tmp[i]),6)))
+                    self.roots[i].setText(self.var[i].text() + '={0}'.format(round(sympy.N(tmp[i].subs('e',sympy.E)),6)))
             else:
-                print("2")
-                self.roots[0].setText(self.var[0].text() + '=' + str(round(sympy.N(ans[0]),6)))
-        elif type(ans)==dict:
+                self.roots[0].setText(self.var[0].text() + '={0}'.format(round(sympy.N(self.ans[0].subs('e',sympy.E)),6)))
+        elif type(self.ans)==dict:
+            self.label3.setText('解：（1/1）')
             for i in range(self.num + 1):
-                print("3")
-                self.roots[i].setText(self.var[i].text() + '=' + str(round(sympy.N(list(ans.values())[i]),6)))
+                self.roots[i].setText(self.var[i].text() + '={0}'.format(round(sympy.N(list(self.ans.values())[i]),6)))
+    
+    def keyPressEvent(self, e): #通过键盘PgUp/PgDn键控制多解的显示
+        if type(self.ans)==list and len(self.ans)>0:
+            flag = False
+            if e.key() == QtCore.Qt.Key_PageUp:
+                self.curr_idx = 1+self.curr_idx if self.curr_idx!=len(self.ans)-1 else 0
+                flag = True
+            elif e.key() == QtCore.Qt.Key_PageDown:
+                self.curr_idx = self.curr_idx-1 if self.curr_idx!=0 else len(self.ans)-1
+                flag = True
+            if flag:
+                self.label3.setText('解：（{0}/{1}）'.format(self.curr_idx+1,len(self.ans)))
+                if type(self.ans[0])==tuple:
+                    for i in range(self.num + 1):
+                        self.roots[i].setText(self.var[i].text() + '={0}'.format(round(sympy.N(list(self.ans[self.curr_idx])[i].subs('e',sympy.E)),6)))
+                else:
+                    self.roots[0].setText(self.var[0].text() + '={0}'.format(round(sympy.N(self.ans[self.curr_idx].subs('e',sympy.E)),6)))
 
 
 if __name__ == '__main__':
@@ -115,5 +134,3 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = solver()
     sys.exit(app.exec_())
-    
-        
