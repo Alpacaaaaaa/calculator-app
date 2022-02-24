@@ -11,6 +11,7 @@ from SETTINGS import SETTINGS
 from integral import IntFrame
 from limit import lim
 from series import series
+from sci_constants import const
 
 class expression(): #表达式类，用来计算一个形如(a ± b */ c ^ d)的表达式的值。
     def __init__(self):
@@ -61,12 +62,16 @@ class Calculator(QMainWindow):
         #“级数和”选项卡
         serie_input = QAction("级数和",self)
         serie_input.triggered.connect(self.serie_input)
+        #“调用”选项卡
+        const_input = QAction("科学常数",self)
+        const_input.triggered.connect(self.const_input)
 
         self.toolbar = self.addToolBar('toolbar')
         self.toolbar.addAction(settings)
         self.toolbar.addAction(dint_input)
         self.toolbar.addAction(lim_input)
         self.toolbar.addAction(serie_input)
+        self.toolbar.addAction(const_input)
 
         #初始化“设置”“积分”“极限”“级数和”选项卡
         self.setting_dialog = SETTINGS()
@@ -76,6 +81,8 @@ class Calculator(QMainWindow):
         self.lim_dialog.Signal.connect(self.read_lim)
         self.serie_dialog = series()
         self.serie_dialog.Signal.connect(self.read_serie)
+        self.const_dialog = const()
+        self.const_dialog.Signal.connect(self.read_const)
 
         self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 'exp', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
         self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
@@ -305,7 +312,10 @@ class Calculator(QMainWindow):
 
         self.mem.append(self.serie_dialog.ans)
         self.compute(self.mem)
-
+    def const_input(self):
+        self.const_dialog.show()
+    def read_const(self):
+        return None
 
 if __name__ == '__main__':
 
