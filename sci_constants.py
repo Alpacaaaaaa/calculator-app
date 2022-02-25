@@ -2,7 +2,7 @@
 调用科学常数弹窗的实现
 '''
 import sys
-from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QMenu, QAction, QLineEdit, QTextEdit, QGridLayout, QStackedWidget, QPushButton, QMainWindow)
+from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QMenu, QAction, QLineEdit, QTextEdit, QGridLayout, QStackedWidget, QPushButton, QMainWindow, QMessageBox)
 from PyQt5 import QtSvg, QtCore
 import sympy
 from PyQt5.QtWidgets import QApplication
@@ -38,8 +38,8 @@ class const(QMainWindow):
         self.menubar = QMainWindow.menuBar(self)
 
         modemenu = QMenu('切换类别',self)
-        mode1 = QAction('电磁常数',self)
-        mode2 = QAction('通用常数',self)
+        mode1 = QAction('通用常数',self)
+        mode2 = QAction('电磁常数',self)
         mode3 = QAction('物理化学常数',self)
         modemenu.addAction(mode2)
         modemenu.addAction(mode1)
@@ -55,11 +55,11 @@ class const(QMainWindow):
         self.Layout = QVBoxLayout(self.centralwidget)
         self.Layout.addWidget(self.stackedWidget)
 
-        self.form2  = QWidget()
-        self.setup2()
-
         self.form1  = QWidget()
         self.setup1()
+
+        self.form2  = QWidget()
+        self.setup2()
 
         self.form3  = QWidget()
         self.setup3()
@@ -69,6 +69,7 @@ class const(QMainWindow):
         self.stackedWidget.addWidget(self.form3)
 
         self.resize(500,300)
+        self.ans = None
 
     def int1(self):
         self.stackedWidget.setCurrentIndex(0)
@@ -104,6 +105,10 @@ class const(QMainWindow):
         self.svgWidget1 = QtSvg.QSvgWidget()
         self.grid1.addWidget(self.svgWidget1, 2, 1, 4, 2, QtCore.Qt.AlignCenter)
 
+        confirm = QPushButton('确认')
+        confirm.clicked.connect(self.confirm)
+        self.grid1.addWidget(confirm, 6,2)
+
     def setup2(self):
         self.grid2 = QGridLayout(self.form2)
 
@@ -128,6 +133,10 @@ class const(QMainWindow):
 
         self.svgWidget2 = QtSvg.QSvgWidget()
         self.grid2.addWidget(self.svgWidget2, 2, 1, 4, 2, QtCore.Qt.AlignCenter)
+
+        confirm = QPushButton('确认')
+        confirm.clicked.connect(self.confirm)
+        self.grid2.addWidget(confirm, 6,2)
 
     def setup3(self):
         self.grid3 = QGridLayout(self.form3)
@@ -154,7 +163,12 @@ class const(QMainWindow):
         self.svgWidget3 = QtSvg.QSvgWidget()
         self.grid3.addWidget(self.svgWidget3, 2, 1, 4, 2, QtCore.Qt.AlignCenter)
 
+        confirm = QPushButton('确认')
+        confirm.clicked.connect(self.confirm)
+        self.grid3.addWidget(confirm, 6,2)
+
     def clicked1(self):
+        self.ans = (self.form1.listwidget_1.currentItem().text(),em_constants[self.form1.listwidget_1.currentItem().text()])
         self.label1.setText(em_annotations[self.form1.listwidget_1.currentItem().text()].split('，')[0])
         self.label11.setText('量纲：' + em_annotations[self.form1.listwidget_1.currentItem().text()].split('，')[1])
         latex_code = em_latex[self.form1.listwidget_1.currentItem().text()] + '=' + em_constants[self.form1.listwidget_1.currentItem().text()].replace('e','\\times 10^{') +'}'
@@ -163,6 +177,7 @@ class const(QMainWindow):
         self.grid1.addWidget(self.svgWidget1, 2, 1, 4, 2, QtCore.Qt.AlignCenter)
 
     def clicked2(self):
+        self.ans = (self.form2.listwidget_1.currentItem().text(),un_constants[self.form2.listwidget_1.currentItem().text()])
         self.label2.setText(un_annotations[self.form2.listwidget_1.currentItem().text()].split('，')[0])
         self.label21.setText('量纲：' + un_annotations[self.form2.listwidget_1.currentItem().text()].split('，')[1])
         latex_code = un_latex[self.form2.listwidget_1.currentItem().text()] + '=' + un_constants[self.form2.listwidget_1.currentItem().text()].replace('e','\\times 10^{') +'}'
@@ -171,6 +186,7 @@ class const(QMainWindow):
         self.grid2.addWidget(self.svgWidget2, 2, 1, 4, 2, QtCore.Qt.AlignCenter)
     
     def clicked3(self):
+        self.ans = (self.form3.listwidget_1.currentItem().text(),pc_constants[self.form3.listwidget_1.currentItem().text()])
         self.label3.setText(pc_annotations[self.form3.listwidget_1.currentItem().text()].split('，')[0])
         self.label31.setText('量纲：' + pc_annotations[self.form3.listwidget_1.currentItem().text()].split('，')[1])
         latex_code = pc_latex[self.form3.listwidget_1.currentItem().text()] + '=' + pc_constants[self.form3.listwidget_1.currentItem().text()].replace('e','\\times 10^{') +'}'
@@ -178,5 +194,9 @@ class const(QMainWindow):
         self.svgWidget3.setFixedSize(10*len(latex_code),35)
         self.grid3.addWidget(self.svgWidget3, 2, 1, 4, 2, QtCore.Qt.AlignCenter)
     
-    def Conf(self):
-        return None
+    def confirm(self):
+        if self.ans:
+            self.Signal.emit('1')
+            self.close()
+        else:
+            QMessageBox.warning(self, "Warning", "请选择一个常数！", QMessageBox.Ok)
