@@ -258,8 +258,13 @@ class Calculator(QMainWindow):
                     CAL[-1].curr_num=None
                     CAL[-1].curr_num_text=""
             elif type(sender)!=type(''):
-                CAL[-1].curr_num = sender
-                self.exp = self.exp + '(...)'
+                if type(sender)==tuple:
+                    name, num = sender
+                    CAL[-1].curr_num = float(num)
+                    self.exp = self.exp + name
+                else:
+                    CAL[-1].curr_num = sender
+                    self.exp = self.exp + '(...)'
 
         #输出结果与格式控制
         self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
@@ -315,7 +320,17 @@ class Calculator(QMainWindow):
     def const_input(self):
         self.const_dialog.show()
     def read_const(self):
-        return None
+        if self.restart:    #如果需要重开，则清除CAL栈
+            CAL.clear()
+            FUNC.clear()
+            EXP=expression()
+            CAL.append(EXP)
+            self.restart=False
+            self.exp=""
+            self.mem.clear()
+
+        self.mem.append(self.const_dialog.ans)
+        self.compute(self.mem)
 
 if __name__ == '__main__':
 
