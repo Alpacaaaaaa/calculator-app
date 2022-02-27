@@ -1,12 +1,12 @@
 '''
-添加输入级数和模块
+优化界面,增加Ans按键与最近结果记录功能
 '''
 import numpy as np
 import sys
 import sympy
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLabel, QAction, QMainWindow
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import QFont, QIcon, QColor, QPalette
 from SETTINGS import SETTINGS
 from integral import IntFrame
 from limit import lim
@@ -33,6 +33,8 @@ CAL.append(EXP)
 #同样利用栈结构来处理函数调用.开一个函数栈来记录每层括号()外面对应的是什么函数
 FUNC=[]
 
+style_sheet = "QPushButton{font-family:'Calibri Light';font-size:22px}\QPushButton{background-color:rgb(245,245,245)}\QPushButton{border:none}\QPushButton:hover{background-color:rgb(235, 235, 235)}"
+
 #异常处理函数，待完善
 def ERROR_INPUT():
     return None
@@ -48,6 +50,11 @@ class Calculator(QMainWindow):
 
     def initUI(self):
         grid = QGridLayout()
+        grid.setSpacing(3)
+
+        self.palette = QPalette()
+        self.palette.setColor(self.backgroundRole(), QColor(250,250,250))
+        self.setPalette(self.palette)
 
         #工具栏选项
         #“设置”选项卡
@@ -84,7 +91,7 @@ class Calculator(QMainWindow):
         self.const_dialog = const()
         self.const_dialog.Signal.connect(self.read_const)
 
-        self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 'exp', 'CE', 'Bck', '^', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', '|x|', '1', '2', '3', '+', 'e', 'pi', '0', '.', '=']
+        self.names = ['arcsin', 'arccos', 'arctan', 'sin', 'cos', 'tan', 'lg', 'ln',  '(', ')', 'CE', 'Bck','exp', '8', '7', '9', 'e', 'pi', 'sqrt()', '4', '5', '6', '^', '/', '|x|', '1', '2', '3', '*', '-', 'x!', 'Ans', '0', '.', '+', '=']
         self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
 
         #定义常量e与pi
@@ -94,30 +101,35 @@ class Calculator(QMainWindow):
         self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
         self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan', '|x|':'abs', 'exp':'exp'}
 
-        positions = [(i+20,j) for i in range(7) for j in range(5)]
+        positions = [(i+20,j) for i in range(6) for j in range(6)]
         
         for position, name in zip(positions, self.names):   #对每个button设置位置、文字与快捷键
-            if name == '':
-                continue
             button=QPushButton(name,self)
             if name in self.operators:
                 button.setShortcut(name)
-            
+
             button.clicked.connect(self.INPUT)
+            button.setFixedSize(78,60)
+            button.setStyleSheet(style_sheet)
             grid.addWidget(button, *position)
+            button.pressed.connect(self.pressed_color)
+            button.released.connect(self.released_color)
 
         #用于显示输入表达式的label
         self.exp=""
         self.label_exp = QLabel(self.exp, self)
-        grid.addWidget(self.label_exp, 0, 0, 1, 5)
-        self.label_exp.setAlignment(Qt.AlignRight)
+        grid.addWidget(self.label_exp, 0, 0, 1, 6)
+        self.label_exp.setAlignment(Qt.AlignRight|Qt.AlignBottom)
+        self.label_exp.setFixedHeight(72)
 
         #用于显示计算结果的label
         self.label_ans = QLabel(self)
-        grid.addWidget(self.label_ans, 10, 0, 1, 5)
-        self.label_ans.setAlignment(Qt.AlignRight)
+        grid.addWidget(self.label_ans, 10, 0, 1, 6)
+        self.label_ans.setAlignment(Qt.AlignRight|Qt.AlignTop)
+        self.label_ans.setFixedHeight(72)
 
-        self.mem=[]
+        self.mem = []
+        self.ans = 0
 
         widget = QWidget()
         widget.setLayout(grid)
@@ -178,6 +190,10 @@ class Calculator(QMainWindow):
                 CAL[-1].curr_num=self.constants[sender]
                 self.exp+=sender
 
+            elif sender == 'Ans':
+                CAL[-1].curr_num=self.ans
+                self.exp+=sender
+
             elif sender in self.functions.keys():   #遇到函数
                 temp=expression()           #新开一个expression对象压入CAL栈
                 CAL.append(temp)            
@@ -222,6 +238,7 @@ class Calculator(QMainWindow):
 
                     if sender == "=":
                         self.restart=True
+                        self.ans = CAL[0].res
                     elif sender ==")" or sender == '_)':
                         ans=CAL[-1].res
                         CAL.pop()
@@ -273,6 +290,12 @@ class Calculator(QMainWindow):
         self.label_ans.setText("{0}".format(CAL[0].res.evalf() if (not self.setting_dialog.sym) and (not type(CAL[0].res) in [type(1),type(0.1)]) else CAL[0].res))
         while list[-1] in placeholder:
             list.pop()   
+
+    def pressed_color(self):    #按下button时改变颜色
+        self.sender().setStyleSheet("QPushButton{background-color:rgb(235,235,235)}\QPushButton{border:none}")
+
+    def released_color(self):   #松开时恢复
+        self.sender().setStyleSheet(style_sheet)
 
     def show_option(self):
         self.setting_dialog.show()
