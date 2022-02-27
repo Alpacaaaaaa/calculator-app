@@ -294,9 +294,9 @@ class Calculator(QMainWindow):
                     self.exp = self.exp + '(...)'
 
         #输出结果与格式控制
-        self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
+        self.label_exp.setFont(QFont("Calibri Light", *(12,50) if self.restart else (16,75)))
         self.label_exp.setText(self.exp)
-        self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
+        self.label_ans.setFont(QFont("Calibri Light", *(16,75) if self.restart else (12,50)))
         if error_flag:
             self.label_ans.setText("错误")
         else:

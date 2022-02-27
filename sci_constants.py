@@ -8,7 +8,7 @@ import sympy
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtSvg import QSvgWidget
 from str2svg import tex2svg
-from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtGui import QPixmap, QFont, QPalette, QColor
 from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem
 from str2svg import tex2svg
 
@@ -33,6 +33,10 @@ class const(QMainWindow):
         # 创建界面
         self.centralwidget = QWidget()
         self.setCentralWidget(self.centralwidget)
+
+        self.palette = QPalette()
+        self.palette.setColor(self.backgroundRole(), QColor(250,250,250))
+        self.setPalette(self.palette)
 
         # 初始化菜单栏
         self.menubar = QMainWindow.menuBar(self)

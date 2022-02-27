@@ -6,12 +6,17 @@
 import sympy
 from PyQt5.QtWidgets import (QWidget, QLabel, QAction, QLineEdit, QTextEdit, QGridLayout, QApplication, QStackedWidget, QPushButton, QMainWindow)
 from PyQt5 import QtCore
+from PyQt5.QtGui import QColor, QPalette
 import sys
 class solver(QWidget):
     def __init__(self):
         super().__init__()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
+
+        self.palette = QPalette()
+        self.palette.setColor(self.backgroundRole(), QColor(250,250,250))
+        self.setPalette(self.palette)
 
         label1 = QLabel("待求解变量：")
         label1.setAlignment(QtCore.Qt.AlignLeft)

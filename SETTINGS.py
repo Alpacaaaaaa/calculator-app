@@ -2,14 +2,18 @@
 本文件中定义SETTINGS类，是calculator界面"设置"选项卡弹窗的实现
 '''
 import sys
-from PyQt5.QtWidgets import QWidget, QRadioButton, QApplication, QPushButton, QMessageBox, QButtonGroup, QGridLayout, QLabel
-
+from PyQt5.QtWidgets import QWidget, QRadioButton, QButtonGroup, QGridLayout, QLabel
+from PyQt5.QtGui import QColor, QPalette
 class SETTINGS(QWidget):
     def __init__(self):
         super().__init__()
 
         grid = QGridLayout()
         self.setLayout(grid)
+
+        self.palette = QPalette()
+        self.palette.setColor(self.backgroundRole(), QColor(250,250,250))
+        self.setPalette(self.palette)
 
         self.OUTPUT_FORMAT=QLabel("输出形式：")
         self.math_output = QRadioButton('数学输出',self)

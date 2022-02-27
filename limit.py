@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QLabel, QAction, QLineEdit, QTextEdit, QGr
 from PyQt5 import QtSvg
 from PyQt5 import QtCore
 from str2svg import tex2svg
+from PyQt5.QtGui import QColor, QPalette
 inf = {'+infty':+sympy.oo, '-infty':-sympy.oo, 'infty':sympy.oo}
 class lim(QWidget):
     Signal = QtCore.pyqtSignal(str)
@@ -15,6 +16,10 @@ class lim(QWidget):
 
         grid = QGridLayout()
         self.setLayout(grid)
+
+        self.palette = QPalette()
+        self.palette.setColor(self.backgroundRole(), QColor(250,250,250))
+        self.setPalette(self.palette)
 
         label1 = QLabel("极限过程：x→")
         label1.setAlignment(QtCore.Qt.AlignCenter)

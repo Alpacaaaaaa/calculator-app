@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QTextEdit, QGridLayout,
 from PyQt5 import QtSvg
 from PyQt5 import QtCore
 from str2svg import tex2svg
+from PyQt5.QtGui import QColor, QPalette
 import sys
 
 class series(QWidget):
@@ -16,6 +17,10 @@ class series(QWidget):
 
         grid = QGridLayout()
         self.setLayout(grid)
+
+        self.palette = QPalette()
+        self.palette.setColor(self.backgroundRole(), QColor(250,250,250))
+        self.setPalette(self.palette)
 
         label1 = QLabel("求和首项")
         label1.setAlignment(QtCore.Qt.AlignCenter)
