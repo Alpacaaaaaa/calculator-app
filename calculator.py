@@ -1,5 +1,6 @@
 '''
 优化界面,增加Ans按键与最近结果记录功能
+增加除零判断；修复除以0到1之间的小数时出现的bug
 '''
 import numpy as np
 import sys
@@ -178,6 +179,7 @@ class Calculator(QMainWindow):
         FUNC.clear()
         EXP=expression()
         CAL.append(EXP)
+        error_flag = False
 
         placeholder = ['flag', '_)']    #定义占位符列表.相比于一个有效的计算表达式，一个只输入了一半的表达式缺少了1.结尾处若干个匹配的右括号2.结尾的'='.因此，这里把这些缺少的都补上，这样就可以让输入一半的表达式变有效
         if list[-1]!='=':
@@ -230,7 +232,10 @@ class Calculator(QMainWindow):
                         CAL[-1].res=CAL[-1].res+sgn*CAL[-1].curr_num*CAL[-1].prev_num
 
                     elif (CAL[-1].curr_sym=="/"):
-                        CAL[-1].res=CAL[-1].res+sgn*CAL[-1].prev_num/CAL[-1].curr_num
+                        try:
+                            CAL[-1].res=CAL[-1].res+sgn*CAL[-1].prev_num/CAL[-1].curr_num
+                        except:
+                            error_flag = True
                     CAL[-1].prev_sym=sender
                     CAL[-1].curr_sym=""
                     CAL[-1].prev_num=CAL[-1].curr_num=None
@@ -260,7 +265,10 @@ class Calculator(QMainWindow):
                         if (CAL[-1].curr_sym=="*"):
                             CAL[-1].prev_num=CAL[-1].prev_num*CAL[-1].curr_num
                         elif (CAL[-1].curr_sym=="/"):
-                            CAL[-1].prev_num=CAL[-1].prev_num/CAL[-1].curr_num
+                            try:
+                                CAL[-1].prev_num=CAL[-1].prev_num/CAL[-1].curr_num
+                            except:
+                                error_flag = True
                     CAL[-1].curr_sym=sender
                     CAL[-1].curr_num=None
                     CAL[-1].curr_num_text=""
@@ -287,7 +295,10 @@ class Calculator(QMainWindow):
         self.label_exp.setFont(QFont("Roman Times", *(12,50) if self.restart else (16,75)))
         self.label_exp.setText(self.exp)
         self.label_ans.setFont(QFont("Roman Times", *(16,75) if self.restart else (12,50)))
-        self.label_ans.setText("{0}".format(CAL[0].res.evalf() if (not self.setting_dialog.sym) and (not type(CAL[0].res) in [type(1),type(0.1)]) else CAL[0].res))
+        if error_flag:
+            self.label_ans.setText("错误")
+        else:
+            self.label_ans.setText("{0}".format(CAL[0].res.evalf() if (not self.setting_dialog.sym) and (not type(CAL[0].res) in [type(1),type(0.1)]) else CAL[0].res))
         while list[-1] in placeholder:
             list.pop()   
 
