@@ -1,6 +1,7 @@
 '''
 优化界面,增加Ans按键与最近结果记录功能
 增加除零判断；修复除以0到1之间的小数时出现的bug
+增加左右括号不匹配判断（右括号多于左括号）
 '''
 import numpy as np
 import sys
@@ -245,10 +246,11 @@ class Calculator(QMainWindow):
                         self.restart=True
                         self.ans = CAL[0].res
                     elif sender ==")" or sender == '_)':
-                        ans=CAL[-1].res
-                        CAL.pop()
-                        CAL[-1].curr_num=self.functions[FUNC[-1]](ans)
-                        FUNC.pop()
+                        if len(CAL)>1:
+                            ans=CAL[-1].res
+                            CAL.pop()
+                            CAL[-1].curr_num=self.functions[FUNC[-1]](ans)
+                            FUNC.pop()
 
                 elif (sender=="*" or sender=="/"):  #遇到*/，记录在prev_sym和prev_num中
                     if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
