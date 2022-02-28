@@ -111,7 +111,7 @@ class Calculator(QMainWindow):
                 button.setShortcut(name)
 
             button.clicked.connect(self.INPUT)
-            button.setFixedSize(78,60)
+            button.setFixedSize(72,60)
             button.setStyleSheet(style_sheet)
             grid.addWidget(button, *position)
             button.pressed.connect(self.pressed_color)
