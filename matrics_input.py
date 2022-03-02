@@ -1,15 +1,13 @@
 '''
-输入矩阵弹窗的实现，目前完成了一半（逐元素输入方法）
+输入矩阵弹窗的实现
 '''
 import numpy as np
 import sys
 from PyQt5.QtWidgets import (QWidget, QLabel, QVBoxLayout, QMenu, QAction, QLineEdit, QTextEdit, QGridLayout, QStackedWidget, QPushButton, QMainWindow, QMessageBox)
-from PyQt5 import QtSvg, QtCore
+from PyQt5 import QtCore
 import sympy
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtSvg import QSvgWidget
-from str2svg import tex2svg
-from PyQt5.QtGui import QFont, QPalette, QColor
+from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QApplication
 
 class matrics_input(QMainWindow):
@@ -102,12 +100,35 @@ class matrics_input(QMainWindow):
         self.grid1.addWidget(conf,2,5)
 
     def setup2(self):
+        grid2 = QGridLayout(self.form2)
+
+        label1 = QLabel('请输入矩阵：')
+        self.mat_edit = QTextEdit()
+        self.mat_edit.setPlaceholderText('每个元素之间用空格或逗号（英语）分隔，每行之间用回车或分号（英语）分隔')
+        grid2.addWidget(label1,0,0,1,6)
+        grid2.addWidget(self.mat_edit,1,0,10,6)
+
+        conf = QPushButton('确认')
+        conf.clicked.connect(self.confirm)
+        grid2.addWidget(conf,11,5)
+
+
         return None
 
     def confirm(self):
         try:
-            vec1d = np.array([sympy.sympify(i.text()) for i in self.vec])
-            self.mat = vec1d.reshape(int(self.col_edit.text()),int(self.row_edit.text()))
+            if self.stackedWidget.currentIndex()==1:
+                vec1d = np.array([sympy.sympify(i.text()) for i in self.vec])
+                self.mat = vec1d.reshape(int(self.col_edit.text()),int(self.row_edit.text()))
+            else:
+                TEXT = self.mat_edit.toPlainText()
+
+                TEXT = TEXT.split('\n') if '\n' in TEXT else TEXT.split(';')
+                a = ' ' if ' ' in TEXT[0] else ','
+                self.mat = np.array([sympy.sympify(i) for i in TEXT[0].split(a)]).reshape(1,len(TEXT[0].split(a)))
+                for i in range(len(TEXT)-1):
+                    a = ' ' if ' ' in TEXT[i+1] else ','
+                    self.mat = np.insert(self.mat,i+1,values = [sympy.sympify(num) for num in TEXT[i+1].split(a)], axis = 0)
             self.Signal.emit('ready')
         except:
             QMessageBox.warning(self, "Warning", "不合法的输入！", QMessageBox.Ok)
