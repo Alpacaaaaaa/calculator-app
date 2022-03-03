@@ -1,7 +1,8 @@
 '''
-优化界面,增加Ans按键与最近结果记录功能
-增加除零判断；修复除以0到1之间的小数时出现的bug
-增加左右括号不匹配判断（右括号多于左括号）
+矩阵运算界面的实现。
+当前实现了矩阵的四则运算与乘方，支持求逆、转置、求迹、行列式等函数。
+问题：结果显示（需要显示矩阵）以及矩阵分解（语法和显示结果的逻辑还没想好）
+可能有bug
 '''
 import numpy as np
 import sys
@@ -72,11 +73,11 @@ class mat_Calculator(QMainWindow):
         self.input_dialog = matrices_input()
         self.input_dialog.Signal.connect(self.read_matrices)
 
-        self.names = ['inv', 'tran', 'det', 'LU', 'QR', 'SVD', 'eig', 'FNorm',  '(', ')', 'CE', 'Bck','trace', '8', '7', '9', 'A', 'B', '2Norm', '4', '5', '6', '^', 'C', 'En', '1', '2', '3', '*', '-', '', 'Ans', '0', '.', '+', '=']
+        self.names = ['inv', 'tran', 'det', 'LU', 'QR', 'SVD', 'eig', 'NormF',  '(', ')', 'CE', 'Bck','trace', '8', '7', '9', 'A', 'B', 'Norm2', '4', '5', '6', '^', 'C', 'En', '1', '2', '3', '*', '-', '', 'Ans', '0', '.', '+', '=']
         self.operators = ['(', ')', '7', '8', '9', '4', '5', '6', '*', '1', '2', '3', '-', '0', '+', '=', '^', '.']
 
         #利用lambda表达式给出函数对应的句柄，写成字典的形式，方便调用
-        self.functions = {'':lambda x:x, 'SVD':lambda x: SVD(x), 'det':lambda x:x.det(), 'FNorm':lambda x: x.norm(), 'inv':lambda x: inv(x), '2Norm':lambda x: x.norm(2), 'En':lambda x: sympy.eye(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
+        self.functions = {'':lambda x:x, 'SVD':lambda x: SVD(x), 'det':lambda x:x.det(), 'NormF':lambda x: x.norm(), 'inv':lambda x: inv(x), 'Norm2':lambda x: x.norm(2), 'En':lambda x: sympy.eye(x), 'trace':lambda x:x.trace(), 'tran':lambda x:x.T, 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
 
         positions = [(i+20,j) for i in range(6) for j in range(6)]
         
@@ -178,7 +179,7 @@ class mat_Calculator(QMainWindow):
                 temp=expression()           #新开一个expression对象压入CAL栈
                 CAL.append(temp)
                 FUNC.append(sender)         #将函数记录到函数栈里面
-                self.exp=self.exp+self.function_label[sender]+'('
+                self.exp=self.exp+sender+'('
 
             elif sender in self.operators or sender in placeholder:  #如果按下的是运算符
                 if not(sender in placeholder):
@@ -195,7 +196,10 @@ class mat_Calculator(QMainWindow):
 
                 elif (sender=="+" or sender=="-" or sender==")" or sender=="=" or sender in placeholder):    #遇到+-)=，进行计算
                     if (CAL[-1].curr_num is None):                                #先结算curr_num的读取
-                        CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else (1 if (CAL[-1].base_num!=None or CAL[-1].curr_sym=='*' or CAL[-1].curr_sym=='/') else 0)
+                        try:
+                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else (1 if (CAL[-1].base_num!=None or CAL[-1].curr_sym=='*') else 0)
+                        except:
+                            error_flag = True
 
                     if not(CAL[-1].base_num is None):                                #再结算^运算
                         CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
@@ -203,7 +207,7 @@ class mat_Calculator(QMainWindow):
 
                     sgn=-1 if (CAL[-1].prev_sym=="-") else 1
 
-                    if (CAL[-1].curr_sym==""):                                  #再结算*运算
+                    if CAL[-1].curr_sym=="" and CAL[-1].curr_num != 0:               #再结算*运算
                         CAL[-1].res = (CAL[-1].curr_num*sgn+CAL[-1].res) if CAL[-1].res else CAL[-1].curr_num*sgn
 
                     elif (CAL[-1].curr_sym=="*"):
