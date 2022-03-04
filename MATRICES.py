@@ -1,6 +1,6 @@
 '''
 矩阵运算界面的实现。
-当前实现了矩阵的四则运算与乘方，支持求逆、转置、求迹、行列式等函数。
+更新矩阵结果的显示。现在结果只能显示矩阵不能显示数字了，两者如何切换还在研究。还是有很大问题，效果不佳
 问题：结果显示（需要显示矩阵）以及矩阵分解（语法和显示结果的逻辑还没想好）
 可能有bug
 '''
@@ -9,8 +9,11 @@ import sys
 import sympy
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLabel, QAction, QMainWindow
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QFont, QIcon, QColor, QPalette
+from PyQt5.QtGui import QFont, QIcon, QColor, QPalette, QPixmap
 from matrices_input import matrices_input
+from str2svg import tex2svg
+from PyQt5 import QtSvg
+from mat2png import mat2png
 
 class expression(): #表达式类，用来计算一个形如(a ± b */ c ^ d)的表达式的值。
     def __init__(self):
@@ -37,10 +40,10 @@ MAT = {'A':None, 'B':None, 'C':None}
 #异常处理函数，待完善
 def ERROR_INPUT():
     return None
+
+#矩阵运算函数
 def SVD(x):
     return None
-def det(x):
-    return x.det()
 def inv(x):
     c,r = x.shape
     return x.inv() if c == r else x.pinv()
@@ -106,7 +109,9 @@ class mat_Calculator(QMainWindow):
         self.label_ans = QLabel(self)
         grid.addWidget(self.label_ans, 10, 0, 1, 6)
         self.label_ans.setAlignment(Qt.AlignRight|Qt.AlignTop)
-        self.label_ans.setFixedHeight(72)
+        self.label_ans.setFixedHeight(90)
+        # self.svgWidget = QtSvg.QSvgWidget()
+        # grid.addWidget(self.svgWidget, 10, 0, 1, 6, Qt.AlignRight)
 
         self.mem = []
         self.ans = None
@@ -136,7 +141,7 @@ class mat_Calculator(QMainWindow):
         if sender == "CE":
             self.restart=True
             self.label_exp.setText("")
-            self.label_ans.setText("")
+            # self.label_ans.setText("")
             self.mem.clear()
             return None
 
@@ -151,7 +156,7 @@ class mat_Calculator(QMainWindow):
     def compute(self,list): #传入一个list对象——也就是self.mem，根据这个list对象解析出有效的表达式并计算
         if not list:
             self.label_exp.setText("")
-            self.label_ans.setText("")
+            # self.label_ans.setText("")
             return None
         self.exp=""
         CAL.clear()
@@ -265,13 +270,25 @@ class mat_Calculator(QMainWindow):
         #输出结果与格式控制
         self.label_exp.setFont(QFont("Calibri Light", *(12,50) if self.restart else (16,75)))
         self.label_exp.setText(self.exp)
-        self.label_ans.setFont(QFont("Calibri Light", *(16,75) if self.restart else (12,50)))
+        # self.label_ans.setFont(QFont("Calibri Light", *(16,75) if self.restart else (12,50)))
         if error_flag:
-            self.label_ans.setText("错误")
+            # self.label_ans.setText("错误")
+            latex_code = r'\text{错误}'
         else:
-            print('ans')
-            print(CAL[0].res)
-            # self.label_ans.setText("{0}".format(CAL[0].res.evalf() if (not self.setting_dialog.sym) and (not type(CAL[0].res) in [type(1),type(0.1)]) else CAL[0].res))
+            '''
+            这里，sympy.latex生成的字符串是一个常规字符串，但是传到mat2png函数的需要是一个raw字符串...还不能用转义符把'\'转义掉。。
+            故出此下策。LOL
+            '''
+            latex_code = sympy.latex(CAL[0].res).split('}')[1]
+            latex_code = latex_code.split(r'\end')[0].replace(r'\\',r'\cr')
+            latex_code = r'$$\left[\matrix{' + latex_code + r'}\right]$$'
+            shape = None
+            if type(CAL[0].res)==sympy.matrices.dense.MutableDenseMatrix:
+                shape = CAL[0].res.shape
+        mat2png(latex_code, shape)
+        pix_map = QPixmap('ans.png')
+        self.label_ans.setPixmap(pix_map)
+        self.label_ans.update()
         while list[-1] in placeholder:
             list.pop()   
 
