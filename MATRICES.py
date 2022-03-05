@@ -1,7 +1,8 @@
 '''
 矩阵运算界面的实现。
-更新矩阵结果的显示。现在结果只能显示矩阵不能显示数字了，两者如何切换还在研究。还是有很大问题，效果不佳
-问题：结果显示（需要显示矩阵）以及矩阵分解（语法和显示结果的逻辑还没想好）
+更新矩阵结果的显示。既可以显示矩阵也可以显示数字。还是有很大问题，效果不佳
+为矩阵分解做准备
+问题：矩阵分解（语法和显示结果的逻辑还没想好）
 可能有bug
 '''
 import numpy as np
@@ -42,11 +43,43 @@ def ERROR_INPUT():
     return None
 
 #矩阵运算函数
+def SVD_construct(x,diag):
+    u = None
+    eigvecs2 = (x).eigenvects()
+    eigvs2 = {a:c for (a,b,c) in eigvecs2}
+    for ev in diag:
+        for vec in eigvs2[ev]:
+            if not u:
+                u = sympy.Matrix(vec/vec.norm())
+            else:
+                u=u.col_insert(0,vec/vec.norm())
+    return u
 def SVD(x):
-    return None
+    sigma = v = u = None
+    m,n = x.shape
+    s = (x*x.T).eigenvals() if m<n else (x.T*x).eigenvals()
+    diag = []
+
+    for i in s.keys():
+        for j in range(s[i]):
+            diag.append(i)
+    diag.sort()
+
+    v = SVD_construct(x*x.T,diag)
+    u = SVD_construct(x.T*x,diag)
+    sigma = v.T*x*u.T
+    return v,sigma,u
 def inv(x):
     c,r = x.shape
     return x.inv() if c == r else x.pinv()
+def EIG(x):
+    if not x.is_diagonalizable():
+        return None
+    p,d = x.diagonalize()
+    return (p,d,p.inv())
+def LU(x):
+    L,U,p = x.LUdecomposition()
+    return L,U,sympy.eye(x.rows).permuteFwd(p)
 #GUI界面
 class mat_Calculator(QMainWindow):
     def __init__(self):
@@ -76,20 +109,25 @@ class mat_Calculator(QMainWindow):
         self.input_dialog = matrices_input()
         self.input_dialog.Signal.connect(self.read_matrices)
 
-        self.names = ['inv', 'tran', 'det', 'LU', 'QR', 'SVD', 'eig', 'NormF',  '(', ')', 'CE', 'Bck','trace', '8', '7', '9', 'A', 'B', 'Norm2', '4', '5', '6', '^', 'C', 'En', '1', '2', '3', '*', '-', '', 'Ans', '0', '.', '+', '=']
+        self.names = [('inv','逆或伪逆'), ('tran','转置'), ('det','行列式'), ('LU','LU分解'), ('QR','QR分解'), ('SVD','奇异值分解'), ('eig','谱分解'), ('NormF','Frobenius范数'),  '(', ')', 'CE', 'Bck',('trace','迹'), '8', '7', '9', ('A','调用矩阵A'), ('B','调用矩阵B'), ('Norm2','2-范数'), '4', '5', '6', '^', 'C', ('En','n阶单位阵'), '1', '2', '3', '*', '-', '', 'Ans', '0', '.', '+', '=']
         self.operators = ['(', ')', '7', '8', '9', '4', '5', '6', '*', '1', '2', '3', '-', '0', '+', '=', '^', '.']
 
         #利用lambda表达式给出函数对应的句柄，写成字典的形式，方便调用
-        self.functions = {'':lambda x:x, 'SVD':lambda x: SVD(x), 'det':lambda x:x.det(), 'NormF':lambda x: x.norm(), 'inv':lambda x: inv(x), 'Norm2':lambda x: x.norm(2), 'En':lambda x: sympy.eye(x), 'trace':lambda x:x.trace(), 'tran':lambda x:x.T, 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
+        self.functions = {'':lambda x:x, 'SVD':lambda x: SVD(x), 'det':lambda x:x.det(), 'NormF':lambda x: x.norm(), 'inv':lambda x: inv(x), 'Norm2':lambda x: x.norm(2), 'En':lambda x: sympy.eye(x), 'trace':lambda x:x.trace(), 'tran':lambda x:x.T, 'QR':lambda x:x.QRdecomposition(), 'eig':lambda x:EIG(x), 'LU':lambda x:LU(x)}
 
         positions = [(i+20,j) for i in range(6) for j in range(6)]
         
         for position, name in zip(positions, self.names):   #对每个button设置位置、文字与快捷键
             if name == '':
                 continue
+            annotation = None
+            if type(name) == tuple:
+                name, annotation = name
             button=QPushButton(name,self)
             if name in self.operators:
                 button.setShortcut(name)
+            if annotation:
+                button.setToolTip(annotation)
 
             button.clicked.connect(self.INPUT)
             button.setFixedSize(72,60)
@@ -156,7 +194,8 @@ class mat_Calculator(QMainWindow):
     def compute(self,list): #传入一个list对象——也就是self.mem，根据这个list对象解析出有效的表达式并计算
         if not list:
             self.label_exp.setText("")
-            # self.label_ans.setText("")
+            self.label_ans.setPixmap(QPixmap(''))
+            self.label_ans.setText("")
             return None
         self.exp=""
         CAL.clear()
@@ -264,30 +303,33 @@ class mat_Calculator(QMainWindow):
             elif type(sender)!=type(''):
                 if type(sender)==tuple:
                     name, num = sender
-                    CAL[-1].curr_num = np.mat(num)
+                    CAL[-1].curr_num = num
                     self.exp = self.exp + name
 
         #输出结果与格式控制
         self.label_exp.setFont(QFont("Calibri Light", *(12,50) if self.restart else (16,75)))
         self.label_exp.setText(self.exp)
-        # self.label_ans.setFont(QFont("Calibri Light", *(16,75) if self.restart else (12,50)))
         if error_flag:
             # self.label_ans.setText("错误")
-            latex_code = r'\text{错误}'
+            self.label_ans.setPixmap(QPixmap(''))
+            self.label_ans.setText('错误')
         else:
             '''
             这里，sympy.latex生成的字符串是一个常规字符串，但是传到mat2png函数的需要是一个raw字符串...还不能用转义符把'\'转义掉。。
             故出此下策。LOL
             '''
-            latex_code = sympy.latex(CAL[0].res).split('}')[1]
-            latex_code = latex_code.split(r'\end')[0].replace(r'\\',r'\cr')
-            latex_code = r'$$\left[\matrix{' + latex_code + r'}\right]$$'
-            shape = None
             if type(CAL[0].res)==sympy.matrices.dense.MutableDenseMatrix:
+                latex_code = sympy.latex(CAL[0].res).split('}')[1]
+                latex_code = latex_code.split(r'\end')[0].replace(r'\\',r'\cr')
+                latex_code = r'$$\left[\matrix{' + latex_code + r'}\right]$$'
                 shape = CAL[0].res.shape
-        mat2png(latex_code, shape)
-        pix_map = QPixmap('ans.png')
-        self.label_ans.setPixmap(pix_map)
+                mat2png(latex_code, shape)
+                pix_map = QPixmap('ans.png')
+                self.label_ans.setPixmap(pix_map)
+            else:
+                self.label_ans.setFont(QFont("Calibri Light", *(16,75) if self.restart else (12,50)))
+                self.label_ans.setText('{0}'.format(CAL[0].res))
+        
         self.label_ans.update()
         while list[-1] in placeholder:
             list.pop()   
