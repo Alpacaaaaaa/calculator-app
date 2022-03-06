@@ -2,7 +2,7 @@
 矩阵运算界面的实现。
 更新矩阵结果的显示。既可以显示矩阵也可以显示数字。还是有很大问题，效果不佳
 为矩阵分解做准备
-问题：矩阵分解（语法和显示结果的逻辑还没想好）
+问题：SVD分解（数学部分还没搞定。可能只能数值解了）；谱分解的结果显示，显示符号化结果会溢出，参看README.md；LU分解，数学部分还没搞定，可能只能PLU
 可能有bug
 '''
 import numpy as np
@@ -47,7 +47,7 @@ def SVD_construct(x,diag):
     u = None
     eigvecs2 = (x).eigenvects()
     eigvs2 = {a:c for (a,b,c) in eigvecs2}
-    for ev in diag:
+    for _,ev in diag:
         for vec in eigvs2[ev]:
             if not u:
                 u = sympy.Matrix(vec/vec.norm())
@@ -58,13 +58,16 @@ def SVD(x):
     sigma = v = u = None
     m,n = x.shape
     s = (x*x.T).eigenvals() if m<n else (x.T*x).eigenvals()
-    diag = []
+    a = x*x.T
 
+    diag = {}
+    # sympy.complex
     for i in s.keys():
         for j in range(s[i]):
-            diag.append(i)
-    diag.sort()
-
+            diag[i] = (sympy.simplify(sympy.Abs(i)).expand(complex = True))
+    print(diag)
+    diag = sorted(diag.items(), key = lambda x:x[1], reverse=False)
+    print(diag)
     v = SVD_construct(x*x.T,diag)
     u = SVD_construct(x.T*x,diag)
     sigma = v.T*x*u.T
@@ -76,7 +79,7 @@ def EIG(x):
     if not x.is_diagonalizable():
         return None
     p,d = x.diagonalize()
-    return (p,d,p.inv())
+    return (True,d,p)
 def LU(x):
     L,U,p = x.LUdecomposition()
     return L,U,sympy.eye(x.rows).permuteFwd(p)
@@ -191,8 +194,8 @@ class mat_Calculator(QMainWindow):
             self.mem.append(sender)
             self.compute(self.mem)
 
-    def compute(self,list): #传入一个list对象——也就是self.mem，根据这个list对象解析出有效的表达式并计算
-        if not list:
+    def compute(self,LIST): #传入一个list对象——也就是self.mem，根据这个list对象解析出有效的表达式并计算
+        if not LIST:
             self.label_exp.setText("")
             self.label_ans.setPixmap(QPixmap(''))
             self.label_ans.setText("")
@@ -205,12 +208,12 @@ class mat_Calculator(QMainWindow):
         error_flag = False
 
         placeholder = ['flag', '_)']    #定义占位符列表.相比于一个有效的计算表达式，一个只输入了一半的表达式缺少了1.结尾处若干个匹配的右括号2.结尾的'='.因此，这里把这些缺少的都补上，这样就可以让输入一半的表达式变有效
-        if list[-1]!='=':
-            for i in range(list.count('(')-list.count(')')):
-                list.append('_)')       #'_)'对应右括号，这里把括号全部匹配
-            list.append('flag')         #'flag'对应'='
+        if LIST[-1]!='=':
+            for i in range(LIST.count('(')-LIST.count(')')):
+                LIST.append('_)')       #'_)'对应右括号，这里把括号全部匹配
+            LIST.append('flag')         #'flag'对应'='
 
-        for sender in list:
+        for sender in LIST:
             if sender == 'Ans':
                 CAL[-1].curr_num=self.ans
                 self.exp+=sender
@@ -310,7 +313,6 @@ class mat_Calculator(QMainWindow):
         self.label_exp.setFont(QFont("Calibri Light", *(12,50) if self.restart else (16,75)))
         self.label_exp.setText(self.exp)
         if error_flag:
-            # self.label_ans.setText("错误")
             self.label_ans.setPixmap(QPixmap(''))
             self.label_ans.setText('错误')
         else:
@@ -326,13 +328,41 @@ class mat_Calculator(QMainWindow):
                 mat2png(latex_code, shape)
                 pix_map = QPixmap('ans.png')
                 self.label_ans.setPixmap(pix_map)
+            elif type(CAL[0].res)==tuple:
+                res = list(CAL[0].res)
+                latex_code = r'$$'
+                w,h = (0,0)
+                for i in range(len(res)):
+                    if not res[1]:
+                        latex = sympy.latex(res[i]).split('}',1)[1]
+                        latex = latex.split(r'\end')[0].replace(r'\\',r'\cr')
+                        latex = r'\left[\matrix{' + latex + r'}\right]'
+                        latex_code = latex_code + latex
+                        wi,hi = res[i].shape
+                        w = w + wi
+                        h = hi if hi>h else h
+                    else:
+                        latex = sympy.latex(res[-1]).split('}',1)[1]
+                        latex = latex.split(r'\end')[0].replace(r'\\',r'\cr')
+                        latex = r'\left[\matrix{' + latex + r'}\right]^{-1}'
+                        latex_code = latex_code + latex
+                        wi,hi = res[-1].shape
+                        w = w + wi + 1
+                        h = hi if hi>h else h
+                latex_code += r'$$'
+                mat2png(latex_code, (w,h))
+                pix_map = QPixmap('ans.png')
+                self.label_ans.setScaledContents(True)
+                pix_map.scaled(self.label_ans.size(),Qt.KeepAspectRatio)
+                self.label_ans.setPixmap(pix_map)
+
             else:
                 self.label_ans.setFont(QFont("Calibri Light", *(16,75) if self.restart else (12,50)))
                 self.label_ans.setText('{0}'.format(CAL[0].res))
         
         self.label_ans.update()
-        while list[-1] in placeholder:
-            list.pop()   
+        while LIST[-1] in placeholder:
+            LIST.pop()   
 
     def pressed_color(self):    #按下button时改变颜色
         self.sender().setStyleSheet("QPushButton{background-color:rgb(235,235,235)}\QPushButton{border:none}")
