@@ -1,8 +1,7 @@
 '''
 矩阵运算界面的实现。
-更新矩阵结果的显示。既可以显示矩阵也可以显示数字。还是有很大问题，效果不佳
-为矩阵分解做准备
-问题：SVD分解（数学部分还没搞定。可能只能数值解了）；谱分解的结果显示，显示符号化结果会溢出，参看README.md；LU分解，数学部分还没搞定，可能只能PLU
+更新矩阵结果的显示。我对谱分解的结果进行判断，如果太复杂了就数值表示，比较简单就解析表示。这样能有效避免结果太长。虽然还是很长。因此，我又把界面调大了，勉强能放得下矩阵结果。谱分解暂时算搞定了，后期再优化吧
+问题：SVD分解（数学部分还没搞定。可能只能数值解了）；LU分解，数学部分还没搞定，可能只能PLU
 可能有bug
 '''
 import numpy as np
@@ -79,7 +78,22 @@ def EIG(x):
     if not x.is_diagonalizable():
         return None
     p,d = x.diagonalize()
-    return (True,d,p)
+
+    if 2*len(sympy.latex(p))+len(sympy.latex(d))>400 and d.shape != (2,2):
+        p,d = p.evalf(n=4),d.evalf(n=4)
+        ans = []
+        for mat in [p,d]:
+            m,n = mat.shape
+            tmp = sympy.Matrix([[]])
+            for i in range(m):
+                row = mat.row(m-1-i)
+                row_i = []
+                for j in range(n):
+                    row_i.append(sympy.re(row[j]) if sympy.im(row[j]) < 1e-4 else row[j])
+                tmp = tmp.row_insert(0,sympy.Matrix(1,n,row_i))
+            ans.append(tmp)
+        return (False,ans[1],ans[0])
+    return (False,d,p)
 def LU(x):
     L,U,p = x.LUdecomposition()
     return L,U,sympy.eye(x.rows).permuteFwd(p)
@@ -133,7 +147,7 @@ class mat_Calculator(QMainWindow):
                 button.setToolTip(annotation)
 
             button.clicked.connect(self.INPUT)
-            button.setFixedSize(72,60)
+            button.setFixedSize(105,90)
             button.setStyleSheet(style_sheet)
             grid.addWidget(button, *position)
             button.pressed.connect(self.pressed_color)
@@ -144,13 +158,13 @@ class mat_Calculator(QMainWindow):
         self.label_exp = QLabel(self.exp, self)
         grid.addWidget(self.label_exp, 0, 0, 1, 6)
         self.label_exp.setAlignment(Qt.AlignRight|Qt.AlignBottom)
-        self.label_exp.setFixedHeight(72)
+        self.label_exp.setFixedHeight(108)
 
         #用于显示计算结果的label
         self.label_ans = QLabel(self)
         grid.addWidget(self.label_ans, 10, 0, 1, 6)
         self.label_ans.setAlignment(Qt.AlignRight|Qt.AlignTop)
-        self.label_ans.setFixedHeight(90)
+        self.label_ans.setFixedHeight(135)
         # self.svgWidget = QtSvg.QSvgWidget()
         # grid.addWidget(self.svgWidget, 10, 0, 1, 6, Qt.AlignRight)
 
@@ -161,7 +175,7 @@ class mat_Calculator(QMainWindow):
         widget.setLayout(grid)
         self.setCentralWidget(widget)
 
-        self.move(300, 150)
+        self.setGeometry(300, 150,700 ,600)
         self.setWindowTitle('矩阵计算')
         self.show()
 
@@ -333,7 +347,7 @@ class mat_Calculator(QMainWindow):
                 latex_code = r'$$'
                 w,h = (0,0)
                 for i in range(len(res)):
-                    if not res[1]:
+                    if res[i]:
                         latex = sympy.latex(res[i]).split('}',1)[1]
                         latex = latex.split(r'\end')[0].replace(r'\\',r'\cr')
                         latex = r'\left[\matrix{' + latex + r'}\right]'
