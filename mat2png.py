@@ -16,10 +16,9 @@ def mat2png(formula, size = None, name = 'ans'):
     # formula = None
     w,h =  (3,3) if size is None else size
     w += formula.count('matrix')
-    mpl.rcParams['font.size'] = 4-formula.count('matrix')*0.5
-    print(formula.count('matrix'))
-    print(formula)
-    fig = plt.figure(figsize=(w*0.15,h*0.1), facecolor=(250/255, 250/255, 250/255))
+    mpl.rcParams['font.size'] = 4 - formula.count('matrix')*0.5
+    size = (w*0.15 + 0.2*formula.count('^{-1}'),h*0.1)
+    fig = plt.figure(figsize=size, facecolor=(250/255, 250/255, 250/255))
     fig.text(0, 0.5, formula)
     path = name + '.png'  # 文件路径
     if os.path.exists(path):  # 如果文件存在
