@@ -3,7 +3,7 @@
 '''
 
 import sympy
-from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton)
+from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QTextEdit, QGridLayout, QMessageBox, QPushButton)
 from PyQt5 import QtSvg
 from PyQt5 import QtCore
 from str2svg import tex2svg
@@ -59,28 +59,34 @@ class series(QWidget):
         self.setWindowTitle('输入级数和')   
 
     def Render(self):
-        p = sympy.latex(sympy.sympify(self.term.text())) if self.term.text().strip() else ''
-        if self.term2.text()=='infty':
-            q = '\infty'
-        else:
-            q = sympy.latex(sympy.sympify(self.term2.text())) if self.term2.text().strip() else ''
-        f = sympy.latex(sympy.sympify(self.func.toPlainText())) if self.func.toPlainText().strip() else ''
-        latex_code = r'\sum_{n= ' + p + '}^{ '+q+'}'+f
-        self.svgWidget.load(tex2svg(latex_code,1))
+        try:
+            p = sympy.latex(sympy.sympify(self.term.text())) if self.term.text().strip() else ''
+            if self.term2.text()=='infty':
+                q = '\infty'
+            else:
+                q = sympy.latex(sympy.sympify(self.term2.text())) if self.term2.text().strip() else ''
+            f = sympy.latex(sympy.sympify(self.func.toPlainText())) if self.func.toPlainText().strip() else ''
+            latex_code = r'\sum_{n= ' + p + '}^{ '+q+'}'+f
+            self.svgWidget.load(tex2svg(latex_code,1))
 
-        self.svgWidget.show()
-        self.svgWidget.setFixedWidth(60)
-        self.svgWidget.setFixedHeight(60)
+            self.svgWidget.show()
+            self.svgWidget.setFixedWidth(60)
+            self.svgWidget.setFixedHeight(60)
+        except:
+            QMessageBox.warning(self, "Warning", "不合法的输入！", QMessageBox.Ok)
         
     def Conf(self):
-        p = sympy.sympify(self.term.text()) if self.term.text().strip() else ''
-        if self.term2.text()=='infty':
-            q = sympy.oo
-        else:
-            q = sympy.sympify(self.term.text()) if self.term.text().strip() else ''
-        f = sympy.sympify(self.func.toPlainText()) if self.func.toPlainText().strip() else ''
-        self.latex_code = r'\sum_{n= ' + sympy.latex(p) + '}^{ ' + sympy.latex(q) +'}' + sympy.latex(f)
-        n = sympy.Symbol('n')
-        self.ans=sympy.Sum(f,(n,p,q)).doit()
-        self.Signal.emit('1')
-        self.close()
+        try:
+            p = sympy.sympify(self.term.text()) if self.term.text().strip() else ''
+            if self.term2.text()=='infty':
+                q = sympy.oo
+            else:
+                q = sympy.sympify(self.term.text()) if self.term.text().strip() else ''
+            f = sympy.sympify(self.func.toPlainText()) if self.func.toPlainText().strip() else ''
+            self.latex_code = r'\sum_{n= ' + sympy.latex(p) + '}^{ ' + sympy.latex(q) +'}' + sympy.latex(f)
+            n = sympy.Symbol('n')
+            self.ans=sympy.Sum(f,(n,p,q)).doit()
+            self.Signal.emit('1')
+            self.close()
+        except:
+            QMessageBox.warning(self, "Warning", "不合法的输入！", QMessageBox.Ok)

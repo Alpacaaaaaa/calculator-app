@@ -1,9 +1,10 @@
 '''
 本文件中定义lim类，是calculator界面"极限"选项卡弹窗的实现
+增加异常处理
 '''
 
 import sympy
-from PyQt5.QtWidgets import (QWidget, QLabel, QAction, QLineEdit, QTextEdit, QGridLayout, QApplication, QStackedWidget, QPushButton, QMainWindow)
+from PyQt5.QtWidgets import (QWidget, QLabel, QAction, QLineEdit, QTextEdit, QGridLayout, QApplication, QPushButton, QMessageBox)
 from PyQt5 import QtSvg
 from PyQt5 import QtCore
 from str2svg import tex2svg
@@ -50,26 +51,32 @@ class lim(QWidget):
         self.setWindowTitle('输入极限')   
 
     def Render(self):
-        if self.process.text() in inf:
-            p = sympy.latex(inf[self.process.text()])
-        else:
-            p = sympy.latex(sympy.sympify(self.process.text())) if self.process.text().strip() else ''
-        
-        f = sympy.latex(sympy.sympify(self.func.toPlainText())) if self.func.toPlainText().strip() else ''
-        latex_code = r'\lim_{x\to '+p+'}'+f
-        self.svgWidget.load(tex2svg(latex_code,1))
-        self.svgWidget.show()
-        self.svgWidget.setFixedHeight(40)
-        self.svgWidget.setFixedWidth(100)
+        try:
+            if self.process.text() in inf:
+                p = sympy.latex(inf[self.process.text()])
+            else:
+                p = sympy.latex(sympy.sympify(self.process.text())) if self.process.text().strip() else ''
+            
+            f = sympy.latex(sympy.sympify(self.func.toPlainText())) if self.func.toPlainText().strip() else ''
+            latex_code = r'\lim_{x\to '+p+'}'+f
+            self.svgWidget.load(tex2svg(latex_code,1))
+            self.svgWidget.show()
+            self.svgWidget.setFixedHeight(40)
+            self.svgWidget.setFixedWidth(100)
+        except:
+            QMessageBox.warning(self, "Warning", "不合法的输入！", QMessageBox.Ok)
         
     def Conf(self):
-        if self.process.text() in inf:
-            p = inf[self.process.text()]
-        else:
-            p = sympy.sympify(self.process.text()) if self.process.text().strip() else ''
-        f = sympy.sympify(self.func.toPlainText()) if self.func.toPlainText().strip() else ''
-        self.latex_code=r'\lim_{x\to '+sympy.latex(p)+'}'+sympy.latex(f)
-        x = sympy.Symbol('x')
-        self.ans=sympy.limit(f, x, p)
-        self.Signal.emit('1')
-        self.close()
+        try:
+            if self.process.text() in inf:
+                p = inf[self.process.text()]
+            else:
+                p = sympy.sympify(self.process.text()) if self.process.text().strip() else ''
+            f = sympy.sympify(self.func.toPlainText()) if self.func.toPlainText().strip() else ''
+            self.latex_code=r'\lim_{x\to '+sympy.latex(p)+'}'+sympy.latex(f)
+            x = sympy.Symbol('x')
+            self.ans=sympy.limit(f, x, p)
+            self.Signal.emit('1')
+            self.close()
+        except:
+            QMessageBox.warning(self, "Warning", "不合法的输入！", QMessageBox.Ok)
