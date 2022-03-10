@@ -1,12 +1,11 @@
 '''
-优化界面,增加Ans按键与最近结果记录功能
-增加除零判断；修复除以0到1之间的小数时出现的bug
-增加左右括号不匹配判断（右括号多于左括号）
+数值结算主界面实现
+最近更新：优化代码；优化结果显示；优化异常处理；优化界面
 '''
 import numpy as np
 import sys
 import sympy
-from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLabel, QAction, QMainWindow
+from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLabel, QAction, QMainWindow, QFrame
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QFont, QIcon, QColor, QPalette
 from SETTINGS import SETTINGS
@@ -17,7 +16,7 @@ from sci_constants import const
 
 class expression(): #表达式类，用来计算一个形如(a ± b */ c ^ d)的表达式的值。
     def __init__(self):
-        self.res=0  #当前表达式中已经计算完了的部分，对应上面的a
+        self.res=sympy.Integer(0)  #当前表达式中已经计算完了的部分，对应上面的a
         self.prev_sym=""    #对应a、b之间的那个±.表示正在运算的部分应当被加到res中还是从res中减去.
         self.prev_num=None  #对应b，被乘/除数
         self.curr_num=None  #对应c或d，正在读入的数
@@ -35,13 +34,9 @@ CAL.append(EXP)
 #同样利用栈结构来处理函数调用.开一个函数栈来记录每层括号()外面对应的是什么函数
 FUNC=[]
 
-style_sheet = "QPushButton{font-family:'Calibri Light';font-size:22px}\QPushButton{background-color:rgb(245,245,245)}\QPushButton{border:none}\QPushButton:hover{background-color:rgb(235, 235, 235)}"
-
-#异常处理函数，待完善
-def ERROR_INPUT():
-    return None
-
-
+style_sheet = "QPushButton{font-family:'Calibri Light';font-size:24px}\QPushButton{background-color:rgb(250,250,250)}\QPushButton{border:none}\QPushButton:hover{background-color:rgb(235, 235, 235)}"
+style_sheet_digit = "QPushButton{font-family:'Calibri Light';font-size:26px}\QPushButton{background-color:rgb(255,255,255)}\QPushButton{border:none}\QPushButton:hover{background-color:rgb(235, 235, 235)}"
+widget_sheet = "\QPushButton{border:10px}"
 #GUI界面
 class Calculator(QMainWindow):
     def __init__(self):
@@ -55,7 +50,7 @@ class Calculator(QMainWindow):
         grid.setSpacing(3)
 
         self.palette = QPalette()
-        self.palette.setColor(self.backgroundRole(), QColor(250,250,250))
+        self.palette.setColor(self.backgroundRole(), QColor(245,245,245))
         self.setPalette(self.palette)
 
         #工具栏选项
@@ -93,7 +88,7 @@ class Calculator(QMainWindow):
         self.const_dialog = const()
         self.const_dialog.Signal.connect(self.read_const)
 
-        self.names = ['arcsin', 'arccos', 'arctan', 'sin', 'cos', 'tan', 'lg', 'ln',  '(', ')', 'CE', 'Bck','exp', '8', '7', '9', 'e', 'pi', 'sqrt()', '4', '5', '6', '^', '/', '|x|', '1', '2', '3', '*', '-', 'x!', 'Ans', '0', '.', '+', '=']
+        self.names = ['arcsin', 'arccos', 'arctan', 'sin', 'cos', 'tan', 'lg', 'ln', 'x!', '|x|', 'exp', 'sqrt()', '^', '(', ')', 'CE', 'Bck', '/', '7', '8', '9', '*10^(', '*', '4', '5', '6', 'e', '-', '1', '2', '3', 'pi', '+', 'Ans', '0', '.', '=']
         self.operators = ['(', ')', '7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', '+', '=','^']
 
         #定义常量e与pi
@@ -103,16 +98,27 @@ class Calculator(QMainWindow):
         self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
         self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan', '|x|':'abs', 'exp':'exp'}
 
-        positions = [(i+20,j) for i in range(6) for j in range(6)]
+        tri_grid = QGridLayout()
+        tri_grid.setSpacing(3)
+        for i in range(12):
+            btn = QPushButton(self.names[i])
+            btn.clicked.connect(self.INPUT)
+            btn.setStyleSheet(style_sheet)
+            btn.pressed.connect(self.pressed_color)
+            btn.released.connect(self.released_color)
+            tri_grid.addWidget(btn,i//6,i%6)
+            btn.setFixedHeight(60)
+        grid.addLayout(tri_grid,19,0,1,5)
+        positions = [(i+20,j) for i in range(5) for j in range(5)]
         
-        for position, name in zip(positions, self.names):   #对每个button设置位置、文字与快捷键
+        for position, name in zip(positions, self.names[12:]):   #对每个button设置位置、文字与快捷键
             button=QPushButton(name,self)
             if name in self.operators:
                 button.setShortcut(name)
 
             button.clicked.connect(self.INPUT)
-            button.setFixedSize(72,60)
-            button.setStyleSheet(style_sheet)
+            button.setFixedSize(90,60)
+            button.setStyleSheet(style_sheet_digit if name.isdigit() else style_sheet)
             grid.addWidget(button, *position)
             button.pressed.connect(self.pressed_color)
             button.released.connect(self.released_color)
@@ -146,13 +152,7 @@ class Calculator(QMainWindow):
         global CAL
 
         if self.restart:    #如果需要重开，则清除CAL栈
-            CAL.clear()
-            FUNC.clear()
-            EXP=expression()
-            CAL.append(EXP)
-            self.restart=False
-            self.exp=""
-            self.mem.clear()
+            self.clear_mem()
         
         sender=self.sender().text() #判断按下了哪个button
         if sender == "CE":
@@ -189,7 +189,41 @@ class Calculator(QMainWindow):
             list.append('flag')         #'flag'对应'='
 
         for sender in list:
-            if sender in self.constants.keys():   #按下的是pi或e等常量
+            if sender == '*10^(':
+                self.exp = self.exp + sender
+                if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
+                        try:
+                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(0)
+                        except:
+                            error_flag = True
+                            break
+                    
+                if (CAL[-1].base_num!=None):                                #再结算^运算
+                    CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
+                    CAL[-1].base_num=None
+
+                if CAL[-1].prev_num==None:
+                    CAL[-1].prev_num=CAL[-1].curr_num
+
+                else:
+                    if (CAL[-1].curr_sym=="*"):
+                        CAL[-1].prev_num=CAL[-1].prev_num*CAL[-1].curr_num
+                    elif (CAL[-1].curr_sym=="/"):
+                            try:
+                                CAL[-1].prev_num=CAL[-1].prev_num/CAL[-1].curr_num
+                            except:
+                                error_flag = True
+                CAL[-1].curr_sym='*'
+                CAL[-1].base_num=sympy.Integer(10)
+                CAL[-1].curr_num_text=""
+                temp=expression()
+                CAL.append(temp)
+                FUNC.append("")
+
+            elif sender in self.constants.keys():   #按下的是pi或e等常量
+                if CAL[-1].curr_num or CAL[-1].curr_num_text:
+                    error_flag = True
+
                 CAL[-1].curr_num=self.constants[sender]
                 self.exp+=sender
 
@@ -214,11 +248,18 @@ class Calculator(QMainWindow):
                     FUNC.append("")
 
                 elif sender.isdigit() or sender == '.': #如果是数字或小数点，继续读
-                    CAL[-1].curr_num_text+=sender
+                    if CAL[-1].curr_num:
+                        error_flag = True
+                    else:
+                        CAL[-1].curr_num_text+=sender
 
                 elif (sender=="+" or sender=="-" or sender==")" or sender=="=" or sender in placeholder):    #遇到+-)=，进行计算
                     if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
-                        CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else (1 if (CAL[-1].base_num!=None or CAL[-1].curr_sym=='*' or CAL[-1].curr_sym=='/') else 0)
+                        try:
+                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else (sympy.Integer(1) if (CAL[-1].base_num!=None or CAL[-1].curr_sym=='*' or CAL[-1].curr_sym=='/') else sympy.Integer(0))
+                        except:
+                            error_flag = True
+                            break
 
                     if (CAL[-1].base_num!=None):                                #再结算^运算
                         CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
@@ -254,7 +295,11 @@ class Calculator(QMainWindow):
 
                 elif (sender=="*" or sender=="/"):  #遇到*/，记录在prev_sym和prev_num中
                     if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
-                        CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
+                        try:
+                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(0)
+                        except:
+                            error_flag = True
+                            break
                     
                     if (CAL[-1].base_num!=None):                                #再结算^运算
                         CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
@@ -277,7 +322,10 @@ class Calculator(QMainWindow):
 
                 elif (sender=="^"): #遇到^，
                     if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
-                        CAL[-1].curr_num=float(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else 0
+                        try:
+                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(0)
+                        except:
+                            error_flag = True
                     if (CAL[-1].base_num!=None):                                #再结算^运算
                         CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
                 
@@ -285,11 +333,13 @@ class Calculator(QMainWindow):
                     CAL[-1].curr_num=None
                     CAL[-1].curr_num_text=""
             elif type(sender)!=type(''):
-                if type(sender)==tuple:
+                if CAL[-1].curr_num or CAL[-1].curr_num_text:
+                    error_flag = True
+                if type(sender)==tuple: #元组，对应输入的是科学常量
                     name, num = sender
-                    CAL[-1].curr_num = float(num)
+                    CAL[-1].curr_num = sympy.sympify(num)
                     self.exp = self.exp + name
-                else:
+                else:                   #积分、极限、求和等
                     CAL[-1].curr_num = sender
                     self.exp = self.exp + '(...)'
 
@@ -297,10 +347,12 @@ class Calculator(QMainWindow):
         self.label_exp.setFont(QFont("Calibri Light", *(12,50) if self.restart else (16,75)))
         self.label_exp.setText(self.exp)
         self.label_ans.setFont(QFont("Calibri Light", *(16,75) if self.restart else (12,50)))
-        if error_flag:
+        if error_flag or CAL[0].res.has(sympy.nan):
             self.label_ans.setText("错误")
+        elif CAL[0].res.has(sympy.oo,sympy.zoo):
+            self.label_ans.setText("无穷")
         else:
-            self.label_ans.setText("{0}".format(CAL[0].res.evalf() if (not self.setting_dialog.sym) and (not type(CAL[0].res) in [type(1),type(0.1)]) else CAL[0].res))
+            self.label_ans.setText("{0}".format(CAL[0].res.evalf(self.setting_dialog.dig) if (not self.setting_dialog.sym)  else CAL[0].res))
         while list[-1] in placeholder:
             list.pop()   
 
@@ -308,7 +360,7 @@ class Calculator(QMainWindow):
         self.sender().setStyleSheet("QPushButton{background-color:rgb(235,235,235)}\QPushButton{border:none}")
 
     def released_color(self):   #松开时恢复
-        self.sender().setStyleSheet(style_sheet)
+        self.sender().setStyleSheet(style_sheet_digit if self.sender().text().isdigit() else style_sheet)
 
     def show_option(self):
         self.setting_dialog.show()
@@ -316,57 +368,38 @@ class Calculator(QMainWindow):
         self.int_dialog.show()
     def read_integral(self):
         if self.restart:    #如果需要重开，则清除CAL栈
-            CAL.clear()
-            FUNC.clear()
-            EXP=expression()
-            CAL.append(EXP)
-            self.restart=False
-            self.exp=""
-            self.mem.clear()
+            self.clear_mem()
         self.mem.append(self.int_dialog.ans)
         self.compute(self.mem)
     def lim_input(self):
         self.lim_dialog.show()
     def read_lim(self):
         if self.restart:    #如果需要重开，则清除CAL栈
-            CAL.clear()
-            FUNC.clear()
-            EXP=expression()
-            CAL.append(EXP)
-            self.restart=False
-            self.exp=""
-            self.mem.clear()
-
+            self.clear_mem()
         self.mem.append(self.lim_dialog.ans)
         self.compute(self.mem)
     def serie_input(self):
         self.serie_dialog.show()
     def read_serie(self):
         if self.restart:    #如果需要重开，则清除CAL栈
-            CAL.clear()
-            FUNC.clear()
-            EXP=expression()
-            CAL.append(EXP)
-            self.restart=False
-            self.exp=""
-            self.mem.clear()
-
+            self.clear_mem()
         self.mem.append(self.serie_dialog.ans)
         self.compute(self.mem)
     def const_input(self):
         self.const_dialog.show()
     def read_const(self):
         if self.restart:    #如果需要重开，则清除CAL栈
-            CAL.clear()
-            FUNC.clear()
-            EXP=expression()
-            CAL.append(EXP)
-            self.restart=False
-            self.exp=""
-            self.mem.clear()
-
+            self.clear_mem()
         self.mem.append(self.const_dialog.ans)
         self.compute(self.mem)
+    def clear_mem(self):
+        CAL.clear()
+        FUNC.clear()
+        EXP=expression()
+        CAL.append(EXP)
+        self.restart=False
+        self.exp=""
+        self.mem.clear()
 
 if __name__ == '__main__':
 
