@@ -1,3 +1,4 @@
 #  calculator app
-《谱 分 解》
-![avatar](%E3%80%8A%E8%B0%B1%E5%88%86%E8%A7%A3%E3%80%8B.png)
+当前main分支主要合并了mode1数值计算部分，主要的文件是calculator.py（其中定义Calculator类），solver.py（其中定义solver类），MATRICES.py（其中定义mat_Calculator类）。我觉得可以先合并一下calculator.py，这部分已经比较稳定了。
+合并时calculator.py只需要在主界面文件中加入'''from calculator import Calculator'''，并且把calculator.py文件中148行'''self.show()'''注释掉在主界面中构造一个Calculator对象并嵌入到stackedwidget的页面中就行。
+主要问题是，Calculator对象自带一个工具栏，主界面应该会有一个工具栏，这两个怎么调。
