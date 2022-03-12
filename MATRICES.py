@@ -324,56 +324,60 @@ class mat_Calculator(QMainWindow):
                     self.exp = self.exp + name
 
         #输出结果与格式控制
-        self.label_exp.setFont(QFont("Calibri Light", *(12,50) if self.restart else (16,75)))
-        self.label_exp.setText(self.exp)
-        if error_flag:
-            self.label_ans.setPixmap(QPixmap(''))
-            self.label_ans.setText('错误')
-        else:
-            '''
-            这里，sympy.latex生成的字符串是一个常规字符串，但是传到mat2png函数的需要是一个raw字符串...还不能用转义符把'\'转义掉。。
-            故出此下策。LOL
-            '''
-            if type(CAL[0].res)==sympy.matrices.dense.MutableDenseMatrix:
-                latex_code = sympy.latex(CAL[0].res).split('}')[1]
-                latex_code = latex_code.split(r'\end')[0].replace(r'\\',r'\cr')
-                latex_code = r'$$\left[\matrix{' + latex_code + r'}\right]$$'
-                shape = CAL[0].res.shape
-                mat2png(latex_code, shape)
-                pix_map = QPixmap('ans.png')
-                self.label_ans.setPixmap(pix_map)
-            elif type(CAL[0].res)==tuple:
-                res = list(CAL[0].res)
-                latex_code = r'$$'
-                w,h = (0,0)
-                for i in range(len(res)):
-                    if res[i]:
-                        latex = sympy.latex(res[i]).split('}',1)[1]
-                        latex = latex.split(r'\end')[0].replace(r'\\',r'\cr')
-                        latex = r'\left[\matrix{' + latex + r'}\right]'
-                        latex_code = latex_code + latex
-                        wi,hi = res[i].shape
-                        w = w + wi
-                        h = hi if hi>h else h
-                    else:
-                        latex = sympy.latex(res[-1]).split('}',1)[1]
-                        latex = latex.split(r'\end')[0].replace(r'\\',r'\cr')
-                        latex = r'\left[\matrix{' + latex + r'}\right]^{-1}'
-                        latex_code = latex_code + latex
-                        wi,hi = res[-1].shape
-                        w = w + wi + 1
-                        h = hi if hi>h else h
-                latex_code += r'$$'
-                mat2png(latex_code, (w,h))
-                pix_map = QPixmap('ans.png')
-                self.label_ans.setScaledContents(True)
-                pix_map.scaled(self.label_ans.size(),Qt.KeepAspectRatio)
-                self.label_ans.setPixmap(pix_map)
-
+        self.label_exp.setFont(QFont("Calibri Light", *(16,75)))
+        if self.restart:
+            self.label_exp.setText(self.exp)
+            if error_flag:
+                self.label_ans.setPixmap(QPixmap(''))
+                self.label_ans.setText('错误')
             else:
-                self.label_ans.setFont(QFont("Calibri Light", *(16,75) if self.restart else (12,50)))
-                self.label_ans.setText('{0}'.format(CAL[0].res))
-        
+                '''
+                这里，sympy.latex生成的字符串是一个常规字符串，但是传到mat2png函数的需要是一个raw字符串...还不能用转义符把'\'转义掉。。
+                故出此下策。LOL
+                '''
+                if type(CAL[0].res)==sympy.matrices.dense.MutableDenseMatrix:
+                    latex_code = sympy.latex(CAL[0].res).split('}')[1]
+                    latex_code = latex_code.split(r'\end')[0].replace(r'\\',r'\cr')
+                    latex_code = r'$$\left[\matrix{' + latex_code + r'}\right]$$'
+                    shape = CAL[0].res.shape
+                    mat2png(latex_code, shape)
+                    pix_map = QPixmap('ans.png')
+                    self.label_ans.setPixmap(pix_map)
+                elif type(CAL[0].res)==tuple:
+                    res = list(CAL[0].res)
+                    latex_code = r'$$'
+                    w,h = (0,0)
+                    for i in range(len(res)):
+                        if res[i]:
+                            latex = sympy.latex(res[i]).split('}',1)[1]
+                            latex = latex.split(r'\end')[0].replace(r'\\',r'\cr')
+                            latex = r'\left[\matrix{' + latex + r'}\right]'
+                            latex_code = latex_code + latex
+                            wi,hi = res[i].shape
+                            w = w + wi
+                            h = hi if hi>h else h
+                        else:
+                            latex = sympy.latex(res[-1]).split('}',1)[1]
+                            latex = latex.split(r'\end')[0].replace(r'\\',r'\cr')
+                            latex = r'\left[\matrix{' + latex + r'}\right]^{-1}'
+                            latex_code = latex_code + latex
+                            wi,hi = res[-1].shape
+                            w = w + wi + 1
+                            h = hi if hi>h else h
+                    latex_code += r'$$'
+                    mat2png(latex_code, (w,h))
+                    pix_map = QPixmap('ans.png')
+                    self.label_ans.setScaledContents(True)
+                    pix_map.scaled(self.label_ans.size(),Qt.KeepAspectRatio)
+                    self.label_ans.setPixmap(pix_map)
+
+                else:
+                    self.label_ans.setFont(QFont("Calibri Light", *(20,75)))
+                    self.label_ans.setText('{0}'.format(CAL[0].res))
+        else:
+            self.label_ans.setFont(QFont("Calibri Light", *(16,75)))
+            self.label_ans.setText(self.exp)
+            self.label_exp.setText('')
         self.label_ans.update()
         while LIST[-1] in placeholder:
             LIST.pop()   

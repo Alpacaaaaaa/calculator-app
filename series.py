@@ -1,5 +1,6 @@
 '''
 本文件中定义series类，是calculator界面"级数和"选项卡弹窗的实现
+增加异常处理
 '''
 
 import sympy
