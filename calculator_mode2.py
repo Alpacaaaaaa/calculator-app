@@ -1,14 +1,3 @@
-'''
-
-修复自然对数底e被错认为一般符号变量的bug
-
-修复输入出错后会显示之前计算结果的bug
-
-'''
-
-import imp
-from signal import signal
-import numpy as np
 import sys
 import sympy
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLabel, QAction, QMainWindow
@@ -16,6 +5,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from formula import *
 from other_sign import *
+from complex_more import *
+from in_integral import *
 
 
 class calculator_mode2(QMainWindow):
@@ -52,9 +43,20 @@ class calculator_mode2(QMainWindow):
         formula_setting.triggered.connect(self.formula.input_n)
         self.formula.Signal[int].connect(self.read_formula) 
 
+        complex_show = QAction('复数', self)
+        self.Complex_more = complex_more()
+        complex_show.triggered.connect(self.complex_input)
+
+
+        # 目前暂时只支持一重积分
+        integraldiag = QAction('不定积分', self)
+        self.in_integral = In_integral()
+        integraldiag.triggered.connect(self.integral_input)
 
         self.toolbar = self.addToolBar('toolbar ')
         self.toolbar.addAction(formula_setting)
+        self.toolbar.addAction(complex_show)
+        self.toolbar.addAction(integraldiag)
         self.toolbar.addAction(sign)
 
 
@@ -86,7 +88,7 @@ class calculator_mode2(QMainWindow):
 
         # 键盘
         self.names = [
-             'a', 'b', 'c', 'x', 'y', 'z',
+             'a', 'b', 'i', 'x', 'y', 'z',
              'arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 
              'lg', 'ln', '(', ')', 'exp','x!',
              '7', '8', '9','|x|', 'CE', 'Bck',
@@ -102,7 +104,7 @@ class calculator_mode2(QMainWindow):
         self.positions = [(i + 30, j) for i in  range(8) for j in range(6)]
         
         # 定义符号常量
-        self.sym_const = {'e':sympy.E, 'pi':sympy.pi}
+        self.sym_const = {'e':sympy.E, 'pi':sympy.pi, 'i':sympy.I}
         #利用lambda表达式给出函数对应的句柄，写成字典的形式，方便调用
         self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
         self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan', '|x|':'abs', 'exp':'exp'}
@@ -177,6 +179,9 @@ class calculator_mode2(QMainWindow):
                     if sender == 'e':
                         self.exp = self.exp + 'E'
                         self.ans = self.ans + 'e'
+                    if sender == 'i':
+                        self.exp = self.exp + 'I'
+                        self.ans = self.ans + 'i'
 
                 else:
                     self.exp = self.exp + sender
@@ -232,6 +237,19 @@ class calculator_mode2(QMainWindow):
     def read_sign(self):
         self.mem.append(self.other_sign.sign_output())
         self.compute(self.mem)
+
+
+    def complex_input(self):
+        self.Complex_more.show()
+        print(self.exp)
+        self.Complex_more.input(self.exp)
+
+
+    def integral_input(self):
+        self.in_integral.exp = self.exp
+        self.in_integral.funcEdit.setText(self.exp)
+        self.in_integral.show()
+        
 
 
     # 异常处理函数
