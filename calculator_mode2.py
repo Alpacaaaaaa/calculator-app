@@ -46,6 +46,7 @@ class calculator_mode2(QMainWindow):
         complex_show = QAction('复数', self)
         self.Complex_more = complex_more()
         complex_show.triggered.connect(self.complex_input)
+        self.Complex_more.Signal.connect(self.complex_reset)
 
 
         # 目前暂时只支持一重积分
@@ -78,7 +79,7 @@ class calculator_mode2(QMainWindow):
         self.label_exp.setFixedHeight(50)
         self.layout1.addWidget(self.label_exp, 0, 0, 1, 5)
         self.label_exp.setAlignment(Qt.AlignRight|Qt.AlignBottom)
-
+        
         #用于显示计算结果的label
         self.ans = ""
         self.label_ans = QLabel(self)
@@ -157,6 +158,8 @@ class calculator_mode2(QMainWindow):
         
         if sender == "CE":
             self.restart=True
+            self.exp = ""
+            self.ans = ""
             self.label_exp.setText("")
             self.label_ans.setText("")
             self.mem.clear()
@@ -176,6 +179,8 @@ class calculator_mode2(QMainWindow):
         if not list:
             self.label_exp.setText("")
             self.label_ans.setText("")
+            self.exp = ""
+            self.ans = ""
         else:
             self.exp = ""
             self.ans = ""
@@ -241,7 +246,11 @@ class calculator_mode2(QMainWindow):
                 self.illeagal_input_warning()
             self.mem.clear()
             
+    def pressed_color(self):    #按下button时改变颜色
+        self.sender().setStyleSheet(style_sheet_released)
 
+    def released_color(self):   #松开时恢复
+        self.sender().setStyleSheet(style_sheet_digit if self.sender().text().isdigit() else style_sheet)
 
     def read_formula(self, flag):
 
@@ -273,11 +282,11 @@ class calculator_mode2(QMainWindow):
         self.in_integral.funcEdit.setText(self.exp)
         self.in_integral.show()
         
-    def pressed_color(self):    #按下button时改变颜色
-        self.sender().setStyleSheet(style_sheet_released)
-
-    def released_color(self):   #松开时恢复
-        self.sender().setStyleSheet(style_sheet_digit if self.sender().text().isdigit() else style_sheet)
+    def complex_reset(self):
+        self.Complex_more.exp = []
+        self.Complex_more.ans = []
+        self.Complex_more.initlabel.setText("")
+        self.Complex_more.resultlabel.setText("")
 
     # 异常处理函数
     def illeagal_input_warning(self):       
