@@ -1,6 +1,6 @@
 '''
 数值结算主界面实现
-最近更新：修复连按三下小数点导致的异常
+最近更新：修复连按三下小数点导致的异常；更改默认插入数字的值；添加连续两个表达式异常处理
 '''
 import numpy as np
 import sys
@@ -297,13 +297,15 @@ class Calculator(QMainWindow):
                         if len(CAL)>1:
                             ans=CAL[-1].res
                             CAL.pop()
+                            if CAL[-1].curr_num != None:
+                                error_flag = True
                             CAL[-1].curr_num=self.functions[FUNC[-1]](ans)
                             FUNC.pop()
 
                 elif (sender=="*" or sender=="/"):  #遇到*/，记录在prev_sym和prev_num中
                     if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
                         try:
-                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(0)
+                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(1)
                         except:
                             error_flag = True
                             break
@@ -333,7 +335,7 @@ class Calculator(QMainWindow):
                 elif (sender=="^"): #遇到^，
                     if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
                         try:
-                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(0)
+                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(1)
                         except:
                             error_flag = True
                         if CAL[-1].curr_num == Ellipsis:                        #额外排除一下Ellipsis类型
