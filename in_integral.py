@@ -1,21 +1,26 @@
 
 '''
 
-挖一个不定积分的坑
+目前可计算一重不定积分
 
+输出结果未渲染
 
 '''
 
+from symtable import Symbol
 import sys
 import sympy
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-class in_integral(QMainWindow):
+class In_integral(QMainWindow):
     signal = pyqtSignal(str)
     def __init__(self):
         super().__init__()
+        self.exp = ""
+        self.x = sympy.Symbol("x")
+        self.out = ""
         self.UIinit()
 
     def UIinit(self):
@@ -56,7 +61,7 @@ class in_integral(QMainWindow):
         self.stackedWidget.addWidget(self.form2)
         self.stackedWidget.addWidget(self.form3)
 
-        self.resize(500,700)
+        self.resize(400,300)
         self.ans = None
 
     def int1(self):
@@ -69,42 +74,49 @@ class in_integral(QMainWindow):
         self.stackedWidget.setCurrentIndex(2)
 
     def setup1(self):
+        cal = QPushButton("计算")
         preview = QPushButton("预览")
-        confirm = QPushButton("确认")
-
-
-        self.uboundEdit = QLineEdit()
-        self.lboundEdit = QLineEdit()
+        cal.clicked.connect(self.calu)
+        
         self.funcEdit = QTextEdit()
+        self.funcEdit.setText(self.exp)
+        self.xEditlabel = QLabel()
+        self.xEditlabel.setText("输入积分变量:默认为x")
+        self.xEdit = QTextEdit()
+        self.result = QLabel()
+        self.result.setText("None")
         self.grid1 = QGridLayout(self.form1)
         self.grid1.setSpacing(20)
+        self.grid1.addWidget(self.funcEdit)
+        self.grid1.addWidget(self.xEditlabel)
+        self.grid1.addWidget(self.xEdit)
+        self.grid1.addWidget(cal)
+        self.grid1.addWidget(self.result)
         self.grid1.addWidget(preview)
-        self.grid1.addWidget(confirm)
 
     def setup2(self):
-        preview = QPushButton("预览")
-        confirm = QPushButton("确认")
-
-
-        self.uboundEdit = QLineEdit()
-        self.lboundEdit = QLineEdit()
-        self.funcEdit = QTextEdit()
-        self.grid2= QGridLayout(self.form2)
-        self.grid2.setSpacing(20)
-        self.grid2.addWidget(preview)
-        self.grid2.addWidget(confirm)
+        return None
 
     def setup3(self):
-        preview = QPushButton("预览")
-        confirm = QPushButton("确认")
+        return None
 
-
-        self.uboundEdit = QLineEdit()
-        self.lboundEdit = QLineEdit()
-        self.funcEdit = QTextEdit()
-        self.grid3 = QGridLayout(self.form3)
-        self.grid3.setSpacing(20)
-        self.grid3.addWidget(preview)
-        self.grid3.addWidget(confirm)
+    def calu(self):
+        try:
+            self.exp = self.funcEdit.toPlainText()
+            tempx = self.xEdit.toPlainText()
+            print(tempx)
+            if tempx != '':
+                self.x = sympy.sympify(tempx)
+            self.exp = sympy.sympify(self.exp)
+            self.out = sympy.Integral(self.exp, self.x)
+            self.result.setText(str(self.out.doit()))
+        except:
+            self.error()
 
     
+    def error(self):
+        reply = QMessageBox.warning(self, "Warning", "不合法的输入！", QMessageBox.Ok)
+        self.exp = ''
+        self.ans = ''
+        if (reply == QMessageBox.Ok):
+            return None
