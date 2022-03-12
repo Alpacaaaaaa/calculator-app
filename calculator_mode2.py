@@ -1,4 +1,3 @@
-import sys
 import sympy
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLabel, QAction, QMainWindow
 from PyQt5.QtCore import *
@@ -103,7 +102,6 @@ class calculator_mode2(QMainWindow):
         
         # 定义符号常量
         self.sym_const = {'e':sympy.E, 'pi':sympy.pi, 'i':sympy.I}
-        #利用lambda表达式给出函数对应的句柄，写成字典的形式，方便调用
         self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
         self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan', '|x|':'abs', 'exp':'exp'}
 
@@ -169,6 +167,10 @@ class calculator_mode2(QMainWindow):
                     self.exp = self.exp + "^"
                     self.ans = self.ans  + "**"
 
+                elif sender == "lg":
+                    self.exp = self.exp + '1/ln(10)*ln('
+                    self.ans = self.ans + 'lg('
+
                 elif sender in self.functions.keys():   
                     self.exp=self.exp+self.function_label[sender]+'('
                     self.ans=self.ans+self.function_label[sender]+'('
@@ -211,11 +213,14 @@ class calculator_mode2(QMainWindow):
                 self.solve_exp = sympy.sympify(self.exp)
                 self.solve_exp = sympy.simplify(self.solve_exp)
                 self.ans = str(self.solve_exp)
+                if self.ans == "zoo":
+                    self.ans = "infty"
                 #输出
                 self.label_ans.setText(self.ans)
             except:
                 self.illeagal_input_warning()
             self.mem.clear()
+            
 
 
     def read_formula(self, flag):
