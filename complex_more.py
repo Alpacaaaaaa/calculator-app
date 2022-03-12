@@ -14,6 +14,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 class complex_more(QMainWindow):
+    Signal = pyqtSignal(int)
     def __init__(self, *args, **kwargs):
         
         super().__init__()
@@ -43,7 +44,7 @@ class complex_more(QMainWindow):
         self.imbtn = QPushButton('虚部')
         self.imbtn.clicked.connect(self.im)
         self.nobtn = QPushButton('退出')
-        self.nobtn.clicked.connect(self.close)
+        self.nobtn.clicked.connect(self.exit)
         self.nobtn.setDefault(True)
 
         self.Layout.addWidget(self.initlabel, 1, 1, 1, 4)
@@ -93,6 +94,10 @@ class complex_more(QMainWindow):
             return
         except:
             self.error()
+    
+    def exit(self):
+        self.Signal.emit(1)
+        self.close()
 
     def error(self):
         reply = QMessageBox.warning(self, "Warning", "不合法的输入！", QMessageBox.Ok)
