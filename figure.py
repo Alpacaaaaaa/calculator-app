@@ -4,7 +4,8 @@ import sympy
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication, QLabel, QAction, QMessageBox, QMainWindow, QLineEdit, QTextEdit
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtGui import QFont, QIcon, QPalette, QColor
+from config import *
 
 #GUI界面
 class FunctionFigure(QMainWindow):
@@ -13,9 +14,13 @@ class FunctionFigure(QMainWindow):
 
         self.initUI()
         self.restart=True   #restart标志量表示是否重开
+        self.palette = QPalette()
+        self.palette.setColor(self.backgroundRole(), QColor(245,245,245))
+        self.setPalette(self.palette)
 
     def initUI(self):
         grid = QGridLayout()
+        grid.setSpacing(3)
 
         self.names = ['arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 'lg', 'ln', '(', ')', 
         'exp', 'CE', 'Bck', '**', '/', 'sqrt()', '7', '8', '9', '*', 'x!', '4', '5', '6', '-', 
@@ -44,41 +49,52 @@ class FunctionFigure(QMainWindow):
                 continue
             button = QPushButton(name, self)
             button.setFocusPolicy(QtCore.Qt.NoFocus)
+            button.setStyleSheet(style_sheet_digit if name.isdigit() else style_sheet)
             button.clicked.connect(self.input)
+            button.setFixedSize(90,60)
             grid.addWidget(button, *position)
+            button.released.connect(self.released_color)
+            button.pressed.connect(self.pressed_color)
 
         self.msgbox = QMessageBox()
 
+        btn_grid = QGridLayout()
         label1 = QLabel("输入函数")
         label1.setAlignment(QtCore.Qt.AlignCenter)
-        grid.addWidget(label1, 0, 0)
+        btn_grid.addWidget(label1,0,0)
 
         self.func=""
         self.func_to_caculate=""
         self.func_exp = QLineEdit()
-        grid.addWidget(self.func_exp, 0, 1, 1, 4)
+        btn_grid.addWidget(self.func_exp,0,1,1,4)
+        grid.addLayout(btn_grid,0,0,1,5)
+
+        lineedit_grid = QGridLayout()
 
         label2 = QLabel("区间起始点")
         label2.setAlignment(QtCore.Qt.AlignCenter)
-        grid.addWidget(label2, 1, 0)
+        lineedit_grid.addWidget(label2, 0, 0)
 
         self.start=""
         self.start_exp = QLineEdit()
-        grid.addWidget(self.start_exp, 1, 1)
+        lineedit_grid.addWidget(self.start_exp, 0, 1)
 
         button_plot = QPushButton('plot', self)
         button_plot.setFocusPolicy(QtCore.Qt.NoFocus)
         button_plot.clicked.connect(self.input)
-        grid.addWidget(button_plot, 1, 2)
+        button_plot.setFixedSize(75,30)
+        lineedit_grid.addWidget(button_plot, 0, 2)
 
 
         label3 = QLabel("区间终止点")
         label3.setAlignment(QtCore.Qt.AlignCenter)
-        grid.addWidget(label3, 1, 3)
+        lineedit_grid.addWidget(label3, 0, 3)
 
         self.stop=""
         self.stop_exp = QLineEdit()
-        grid.addWidget(self.stop_exp, 1, 4)
+        lineedit_grid.addWidget(self.stop_exp, 0, 4)
+
+        grid.addLayout(lineedit_grid,1,0,1,5)
 
         rowSize = 25
         colSize = 25
@@ -99,7 +115,6 @@ class FunctionFigure(QMainWindow):
 
         self.move(300, 150)
         self.setWindowTitle('Function figure')
-        self.show()
 
     # button被按下事件处理函数
     def input(self):
@@ -273,6 +288,12 @@ class FunctionFigure(QMainWindow):
                 self.msgbox.setText("输入公式或区间有误!")
                 self.msgbox.exec()
                 return None
+    def pressed_color(self):    #按下button时改变颜色
+        self.sender().setStyleSheet(style_sheet_released)
+
+    def released_color(self):   #松开时恢复
+        self.sender().setStyleSheet(style_sheet_digit if self.sender().text().isdigit() else style_sheet)
+
 
 if __name__ == '__main__':
 

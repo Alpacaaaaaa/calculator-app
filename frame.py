@@ -60,7 +60,7 @@ class Frame(QMainWindow):
         self.stackedWidget.addWidget(self.form3)
 
 
-        self.resize(500,500)
+        # self.resize(500,500)
 
 
     def switch_mode1(self):

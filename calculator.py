@@ -13,6 +13,7 @@ from integral import IntFrame
 from limit import lim
 from series import series
 from sci_constants import const
+from config import *
 
 class expression(): #表达式类，用来计算一个形如(a ± b */ c ^ d)的表达式的值。
     def __init__(self):
@@ -34,9 +35,7 @@ CAL.append(EXP)
 #同样利用栈结构来处理函数调用.开一个函数栈来记录每层括号()外面对应的是什么函数
 FUNC=[]
 
-style_sheet = "QPushButton{font-family:'Calibri Light';font-size:24px}\QPushButton{background-color:rgb(250,250,250)}\QPushButton{border:none}\QPushButton:hover{background-color:rgb(235, 235, 235)}"
-style_sheet_digit = "QPushButton{font-family:'Calibri Light';font-size:26px}\QPushButton{background-color:rgb(255,255,255)}\QPushButton{border:none}\QPushButton:hover{background-color:rgb(235, 235, 235)}"
-widget_sheet = "\QPushButton{border:10px}"
+
 #GUI界面
 class Calculator(QMainWindow):
     def __init__(self):
@@ -103,7 +102,7 @@ class Calculator(QMainWindow):
         for i in range(12):
             btn = QPushButton(self.names[i])
             btn.clicked.connect(self.INPUT)
-            btn.setStyleSheet(style_sheet)
+            btn.setStyleSheet(style_sheet_func)
             btn.pressed.connect(self.pressed_color)
             btn.released.connect(self.released_color)
             tri_grid.addWidget(btn,i//6,i%6)
@@ -128,13 +127,13 @@ class Calculator(QMainWindow):
         #用于显示输入表达式的label
         self.exp=""
         self.label_exp = QLabel(self.exp, self)
-        grid.addWidget(self.label_exp, 0, 0, 1, 6)
+        grid.addWidget(self.label_exp, 0, 0, 1, 5)
         self.label_exp.setAlignment(Qt.AlignRight|Qt.AlignBottom)
         self.label_exp.setFixedHeight(72)
 
         #用于显示计算结果的label
         self.label_ans = QLabel(self)
-        grid.addWidget(self.label_ans, 10, 0, 1, 6)
+        grid.addWidget(self.label_ans, 10, 0, 1, 5)
         self.label_ans.setAlignment(Qt.AlignRight|Qt.AlignTop)
         self.label_ans.setFixedHeight(72)
 
@@ -372,7 +371,7 @@ class Calculator(QMainWindow):
             list.pop()   
 
     def pressed_color(self):    #按下button时改变颜色
-        self.sender().setStyleSheet("QPushButton{background-color:rgb(235,235,235)}\QPushButton{border:none}")
+        self.sender().setStyleSheet(style_sheet_released)
 
     def released_color(self):   #松开时恢复
         self.sender().setStyleSheet(style_sheet_digit if self.sender().text().isdigit() else style_sheet)

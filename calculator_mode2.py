@@ -6,6 +6,7 @@ from formula import *
 from other_sign import *
 from complex_more import *
 from in_integral import *
+from config import *
 
 class calculator_mode2(QMainWindow):
 
@@ -13,7 +14,9 @@ class calculator_mode2(QMainWindow):
         super().__init__()
         self.UIinit()
         self.restart = False
-
+        self.palette = QPalette()
+        self.palette.setColor(self.backgroundRole(), QColor(245,245,245))
+        self.setPalette(self.palette)
 
     def UIinit(self):
 
@@ -67,19 +70,21 @@ class calculator_mode2(QMainWindow):
     def setup1(self):
 
         self.layout1 = QGridLayout(self.form1)
-        self.layout1.setSpacing(10)
+        self.layout1.setSpacing(5)
         
         #用于显示输入表达式的label
         self.exp=""
         self.label_exp = QLabel(self.exp, self)
+        self.label_exp.setFixedHeight(50)
         self.layout1.addWidget(self.label_exp, 0, 0, 1, 5)
-        self.label_exp.setAlignment(Qt.AlignRight)
+        self.label_exp.setAlignment(Qt.AlignRight|Qt.AlignBottom)
 
         #用于显示计算结果的label
         self.ans = ""
         self.label_ans = QLabel(self)
+        self.label_ans.setFixedHeight(50)
         self.layout1.addWidget(self.label_ans, 10, 0, 1, 5)
-        self.label_ans.setAlignment(Qt.AlignRight)
+        self.label_ans.setAlignment(Qt.AlignRight|Qt.AlignTop)
 
         self.mem = []
 
@@ -87,35 +92,50 @@ class calculator_mode2(QMainWindow):
         self.names = [
              'a', 'b', 'i', 'x', 'y', 'z',
              'arcsin', 'arccos', 'sin', 'cos', 'tan', 'arctan', 
-             'lg', 'ln', '(', ')', 'exp','x!',
-             '7', '8', '9','|x|', 'CE', 'Bck',
-             '4', '5', '6','*','/', '^',
-             '1', '2', '3','+', '-', 'sqrt()', 
-             'e', 'pi', '0', '.', '=', 'solve']
+             'lg', 'ln','sqrt()','|x|', 'x!',
+             '*','(', ')','exp','Bck',
+             '^','7', '8', '9', 'CE', 
+             '/', '4', '5', '6','e',
+             '+', '1', '2', '3', 'pi', 
+             '-','=', '0', '.',  'solve']
        
         self.operators = [
             'a', 'b', 'c', 'x', 'y', 'z',
             '(', ')', '7', '8', '9',
             '/', '4', '5', '6', '*', '1', '2', 
             '3', '-', '0', '.', '+', '=','^']
-        self.positions = [(i + 30, j) for i in  range(8) for j in range(6)]
+        self.positions = [(i + 20, j) for i in  range(6) for j in range(5)]
         
         # 定义符号常量
         self.sym_const = {'e':sympy.E, 'pi':sympy.pi, 'i':sympy.I}
         self.functions = {'':lambda x:x, 'arccos':lambda x:sympy.acos(x), 'arcsin':lambda x:sympy.asin(x), 'arctan':lambda x:sympy.atan(x), 'sin':lambda x:sympy.sin(x), 'cos':lambda x:sympy.cos(x), 'tan':lambda x:sympy.tan(x), 'lg':lambda x:sympy.log(x,10), 'ln':lambda x:sympy.log(x), 'sqrt()':lambda x:sympy.sqrt(x), 'x!':lambda x:sympy.factorial(x), '|x|':lambda x:sympy.Abs(x), 'exp':lambda x:sympy.exp(x)}
         self.function_label = {'sin':'sin', 'cos':'cos', 'tan':'tan', 'lg':'lg', 'ln':'ln', 'sqrt()':'sqrt', 'x!':'fac', 'arcsin':'arcsin', 'arccos':'arccos', 'arctan':'arctan', '|x|':'abs', 'exp':'exp'}
 
+        tri_grid = QGridLayout()
+        tri_grid.setSpacing(3)
+        for i in range(12):
+            btn = QPushButton(self.names[i])
+            btn.clicked.connect(self.INPUT)
+            btn.setStyleSheet(style_sheet_func)
+            btn.pressed.connect(self.pressed_color)
+            btn.released.connect(self.released_color)
+            tri_grid.addWidget(btn,i//6,i%6)
+            btn.setFixedHeight(55)
+        self.layout1.addLayout(tri_grid,19,0,1,5)
 
-        for position, name in zip(self.positions, self.names):
+        for position, name in zip(self.positions, self.names[12:]):
             if name == '':
                 continue
             button=QPushButton(name,self)
+            button.setStyleSheet(style_sheet_digit if name.isdigit() else style_sheet)
+            button.setFixedSize(90,60)
+            button.pressed.connect(self.pressed_color)
+            button.released.connect(self.released_color)
             if name in self.operators:
                 button.setShortcut(name)
             
             if name == 'solve':
                 button.clicked.connect(self.Solve)
-                
 
             else:
                 button.clicked.connect(self.INPUT)
@@ -253,7 +273,11 @@ class calculator_mode2(QMainWindow):
         self.in_integral.funcEdit.setText(self.exp)
         self.in_integral.show()
         
+    def pressed_color(self):    #按下button时改变颜色
+        self.sender().setStyleSheet(style_sheet_released)
 
+    def released_color(self):   #松开时恢复
+        self.sender().setStyleSheet(style_sheet_digit if self.sender().text().isdigit() else style_sheet)
 
     # 异常处理函数
     def illeagal_input_warning(self):       
