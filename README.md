@@ -38,3 +38,5 @@ main分支已合并mode2符号计算已完成部分。目前可实现：普通�
 ### mode3：
 
 - 当对0取10为底对数时不报错
+- 点击plot键时报warning：`QCoreApplication::exec: The event loop is already running`
+- 个人建议如果禁止键盘输入强制点按键输入的话最好还是用QLabel来显示，而不是用QLineEdit，误导性太强了，每次都忍不住直接键盘输入...或者给每个按键加一个快捷键
