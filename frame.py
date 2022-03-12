@@ -21,6 +21,9 @@ class Frame(QMainWindow):
         self.menubar = QMainWindow.menuBar(self)
         filemenu = QMenu('帮助',self)
 
+        self.palette = QPalette()
+        self.palette.setColor(self.backgroundRole(), QColor(240,240,240))
+        self.setPalette(self.palette)
 
         modemenu = QMenu('模式',self)
         mode1 = QAction('简单计算模式',self)
@@ -58,10 +61,6 @@ class Frame(QMainWindow):
         self.stackedWidget.addWidget(self.form1)
         self.stackedWidget.addWidget(self.form2)
         self.stackedWidget.addWidget(self.form3)
-
-
-        self.resize(500,500)
-
 
     def switch_mode1(self):
         self.stackedWidget.setCurrentIndex(0)
