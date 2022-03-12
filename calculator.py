@@ -1,6 +1,6 @@
 '''
 数值结算主界面实现
-最近更新：优化代码；优化结果显示；优化异常处理；优化界面
+最近更新：修复连按三下小数点导致的异常
 '''
 import numpy as np
 import sys
@@ -107,7 +107,7 @@ class Calculator(QMainWindow):
             btn.pressed.connect(self.pressed_color)
             btn.released.connect(self.released_color)
             tri_grid.addWidget(btn,i//6,i%6)
-            btn.setFixedHeight(60)
+            btn.setFixedHeight(55)
         grid.addLayout(tri_grid,19,0,1,5)
         positions = [(i+20,j) for i in range(5) for j in range(5)]
         
@@ -115,6 +115,8 @@ class Calculator(QMainWindow):
             button=QPushButton(name,self)
             if name in self.operators:
                 button.setShortcut(name)
+            if name == 'Bck':
+                button.setShortcut('backspace')
 
             button.clicked.connect(self.INPUT)
             button.setFixedSize(90,60)
@@ -192,11 +194,14 @@ class Calculator(QMainWindow):
             if sender == '*10^(':
                 self.exp = self.exp + sender
                 if (CAL[-1].curr_num==None):                                #先结算curr_num的读取
-                        try:
-                            CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(0)
-                        except:
-                            error_flag = True
-                            break
+                    try:
+                        CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(0)
+                    except:
+                        error_flag = True
+                        break
+                    if CAL[-1].curr_num == Ellipsis:                        #额外排除一下Ellipsis类型
+                        error_flag = True
+                        break
                     
                 if (CAL[-1].base_num!=None):                                #再结算^运算
                     CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
@@ -209,10 +214,10 @@ class Calculator(QMainWindow):
                     if (CAL[-1].curr_sym=="*"):
                         CAL[-1].prev_num=CAL[-1].prev_num*CAL[-1].curr_num
                     elif (CAL[-1].curr_sym=="/"):
-                            try:
-                                CAL[-1].prev_num=CAL[-1].prev_num/CAL[-1].curr_num
-                            except:
-                                error_flag = True
+                        try:
+                            CAL[-1].prev_num=CAL[-1].prev_num/CAL[-1].curr_num
+                        except:
+                            error_flag = True
                 CAL[-1].curr_sym='*'
                 CAL[-1].base_num=sympy.Integer(10)
                 CAL[-1].curr_num_text=""
@@ -260,6 +265,9 @@ class Calculator(QMainWindow):
                         except:
                             error_flag = True
                             break
+                        if CAL[-1].curr_num == Ellipsis:                        #额外排除一下Ellipsis类型
+                            error_flag = True
+                            break
 
                     if (CAL[-1].base_num!=None):                                #再结算^运算
                         CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
@@ -300,6 +308,9 @@ class Calculator(QMainWindow):
                         except:
                             error_flag = True
                             break
+                        if CAL[-1].curr_num == Ellipsis:                        #额外排除一下Ellipsis类型
+                            error_flag = True
+                            break
                     
                     if (CAL[-1].base_num!=None):                                #再结算^运算
                         CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
@@ -326,6 +337,9 @@ class Calculator(QMainWindow):
                             CAL[-1].curr_num=sympy.sympify(CAL[-1].curr_num_text) if CAL[-1].curr_num_text!="" else sympy.Integer(0)
                         except:
                             error_flag = True
+                        if CAL[-1].curr_num == Ellipsis:                        #额外排除一下Ellipsis类型
+                            error_flag = True
+                            break
                     if (CAL[-1].base_num!=None):                                #再结算^运算
                         CAL[-1].curr_num=CAL[-1].base_num**CAL[-1].curr_num
                 
